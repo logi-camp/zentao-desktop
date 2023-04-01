@@ -5,18 +5,14 @@ import { computed, reactive, watch } from 'vue';
 import { ipcRenderer } from 'electron';
 import TaskCMP from './Task.vue';
 import ProjectCMP from './Project.vue';
-import { repository } from '../store';
+import { useObservable } from '@vueuse/rxjs';
+import useRepo from '../store/useRepo';
+
+const repository = useRepo();
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
   console.log(arg); // prints "pong"
 });
-
-const state = reactive<{
-  projects?: Project[];
-  selectedProjectId?: number;
-  selectedTaskId?: number;
-  tasks?: Task[];
-}>({});
 
 const zentao = new Zentao12({ url: 'https://zentao.logicamp.top', account: 'mohamad', password: 'thu6xeiR' });
 
@@ -27,11 +23,6 @@ const getTasks = async () => {
   } else {
     console.log('tasks', result.data);
     repository.updateTasks(result.data?.tasks);
-    state.tasks = result.data?.tasks;
-
-    if (result.data) {
-      state.tasks = Object.values(result.data.tasks);
-    }
   }
   console.log('tasks', result);
 };
@@ -43,41 +34,14 @@ const init = async () => {
     ipcRenderer.send('open-login-window', 'ping');
   } else {
     console.log('res', result.data);
-
-    if (result.data) {
-      state.projects = [...Object.values(result.data.projects), { name: 'All', id: undefined }];
-    }
+    repository.updateProjects([
+      ...(Object.values(result.data.projects) as Project[]),
+      { name: 'All', id: undefined } as unknown as Project,
+    ]);
   }
 
   await getTasks();
-
-  console.log(state.projects);
 };
-
-ipcRenderer.on('select-project', (event, projectId?: number) => {
-  console.log('select proj', projectId);
-  state.selectedProjectId = projectId;
-});
-
-watch(state, ({ projects, selectedProjectId, tasks, selectedTaskId }) => {
-  console.log('watch project');
-  if (state.selectedProjectId) {
-    tasks = tasks?.filter((task) => {
-      return Number.parseInt(task.project) == state.selectedProjectId;
-    });
-  }
-  ipcRenderer.send(
-    'update-menu',
-    JSON.parse(
-      JSON.stringify({
-        selectedProjectId,
-        projects,
-        tasks,
-        selectedTaskId,
-      })
-    )
-  );
-});
 
 init();
 
@@ -85,15 +49,7 @@ const openNativePage = () => {
   ipcRenderer.send('open-native-page-window', 'ok');
 };
 
-const selectedProjectTasks = computed(() => {
-  if (state.selectedProjectId) {
-    return state.tasks?.filter((task) => {
-      return Number.parseInt(task.project) == state.selectedProjectId;
-    });
-  } else {
-    return state.tasks;
-  }
-});
+const projects = useObservable(repository.projects$);
 </script>
 
 <template>
@@ -104,15 +60,18 @@ const selectedProjectTasks = computed(() => {
     </div>
     <div display="flex" align="items-stretch" w="full" flex="wrap">
       <ul w="[30%]">
-        <ProjectCMP v-for="project in state.projects" :project="project" v-model:selected="state.selectedProjectId" />
+        <ProjectCMP
+          v-for="project in projects"
+          :project="project"
+          v-model:selected="repository.selectedProjectId_.value"
+        />
       </ul>
       <div h="100%" border="right-[1px] dashed var(--primary)"></div>
       <ul flex="1">
         <TaskCMP
-          v-for="task in selectedProjectTasks"
+          v-for="task in repository.selectedProjectTasks_.value"
           :task="task"
-          :selected="`${state.selectedTaskId}` === task.id"
-          @select="state.selectedTaskId = task.id ? Number.parseInt(task.id) : undefined"
+          :selected="`${repository.selectedTaskId_.value}` === task.id"
         />
       </ul>
       <div h="100%" border="right-[1px] dashed var(--primary)"></div>

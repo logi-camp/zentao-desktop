@@ -3,7 +3,7 @@
     p="y-1 x-3"
     :class="{ selected: project.id === (selected ? `${selected}` : undefined) }"
     cursor="pointer"
-    @click="$emit('update:selected', Number.parseInt(project.id))"
+    @click="repository.updateSelectedProjectId(project.id ? Number.parseInt(project.id) : undefined)"
     border="white"
   >
     <div class="progress" :style="`width: ${project.progress}%;`"></div>
@@ -20,6 +20,9 @@
 </template>
 <script lang="ts" setup>
 import { Project } from '../api/types';
+import useRepo from '../store/useRepo';
+
+const repository = useRepo();
 
 const props = defineProps<{ project: Project; selected?: number }>();
 defineEmits<{ (e: 'update:selected'): void }>();

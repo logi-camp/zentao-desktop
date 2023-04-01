@@ -1,6 +1,4 @@
-import md5 from 'md5';
 import { ZentaoApiResult } from './types';
-import { formatDate } from './utils';
 import Zentao from './zentao';
 
 /**

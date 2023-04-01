@@ -4,6 +4,7 @@
     "useDefineForClassFields": true,
     "module": "ESNext",
     "moduleResolution": "Node",
+    "allowJs": true,
     "strict": true,
     "jsx": "preserve",
     "resolveJsonModule": true,
@@ -13,7 +14,7 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "src/api", "src/store/", "electron/main/store.ts"],
+  "include": ["src/**/*.ts", "src/api", "src/store/", "electron/main/store/store.ts"],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

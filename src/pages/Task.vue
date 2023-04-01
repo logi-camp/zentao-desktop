@@ -1,5 +1,5 @@
 <template>
-  <li @click="$emit('select')" :class="{ selected }">
+  <li @click="repository.updateSelectedTaskId(task.id ? Number.parseInt(task.id) : undefined)" :class="{ selected }">
     <div class="progress" :style="`width: ${task.progress}%;`"></div>
     <div display="flex" gap="1" align="items-center" z="1" p="x-2 y-1" pos="relative">
       <span text="sm gray-200" class="abbr" p="x-1 y-0">#{{ task.id }}</span>
@@ -13,8 +13,11 @@
 </template>
 <script lang="ts" setup>
 import { Task } from '../api/types';
+import useRepo from '../store/useRepo';
 
-defineProps<{ task: Task; selected?: number }>();
+const repository = useRepo();
+
+defineProps<{ task: Task; selected?: boolean }>();
 defineEmits<{ (e: 'select'): void }>();
 </script>
 <style lang="sass" scoped>
