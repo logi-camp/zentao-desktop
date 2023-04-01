@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { DefineComponent } from 'vue';
 import Main from './pages/Main.vue';
 import Bar from './pages/Bar.vue';
+import repository from './store'
 
 let page = 'Main';
 
-console.log(window.location.href);
+
 if (window.location.href.endsWith('bar')) {
   page = 'Bar';
 } else {
@@ -17,4 +17,6 @@ if (window.location.href.endsWith('bar')) {
   <Bar v-else />
 </template>
 
-<style></style>
+<style lang="ts" setup>
+
+</style>

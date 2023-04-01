@@ -6,6 +6,7 @@ import { repository } from './store';
 let contextMenu: Electron.Menu;
 let tray: Tray;
 let updateMenu: Electron.IpcMainEvent;
+let interval: NodeJS.Timer;
 
 const loadTrayMenu = () => {
   repository.menuState$.subscribe((state) => {
@@ -26,12 +27,12 @@ const loadTrayMenu = () => {
             repository.updateWorkingTask({
               taskId: state.selectedTaskId,
               started: new Date(),
-              interval: setInterval(() => {
-                loadTrayMenu();
-              }, 1000),
             });
+            interval = setInterval(() => {
+              loadTrayMenu();
+            }, 1000);
           } else {
-            clearInterval(state.workingTask.interval);
+            clearInterval(interval);
             repository.updateWorkingTask(undefined);
             loadTrayMenu();
           }
@@ -79,6 +80,10 @@ export default async (app: Electron.App) => {
     icon = nativeImage.createFromPath(path.join(__dirname, 'public/tray-icon-light.png'));
   }
   tray = new Tray(icon);
+  tray.on('balloon-show', () => {
+    console.log('right-click');
+    loadTrayMenu();
+  });
   loadTrayMenu();
   ipcMain.on(
     'update-menu',

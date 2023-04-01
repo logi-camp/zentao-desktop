@@ -1,17 +1,8 @@
 import { createStore, withProps, select } from '@ngneat/elf';
 import { persistState, localStorageStrategy, StateStorage, sessionStorageStrategy } from '@ngneat/elf-persist-state';
-import { Project, Task } from '../../src/api/types';
-import { app, ipcMain } from 'electron';
-import levelup from 'levelup';
-import leveldown from 'leveldown';
-import serialize from 'serialize-javascript';
-function deserialize(serializedJavascript) {
-  return eval('(' + serializedJavascript + ')');
-}
-
-console.log('userData', app.getPath('appData'), app.getAppPath());
-// 1) Create our store
-var db = levelup(leveldown(app.getPath('userData') + '/store-db'));
+import { Project, Task } from '../api/types';
+import { isTemplateNode } from '@vue/compiler-core';
+import { ipcRenderer } from 'electron';
 
 type State = {
   readonly projects: Project[];
@@ -21,58 +12,33 @@ type State = {
   readonly workingTask?: {
     taskId: number;
     started: Date;
+    interval: NodeJS.Timer;
   };
 };
 
-const initialState: State = { projects: [], tasks: [] };
-
-export const store = createStore({ name: 'store' }, withProps<State>(initialState));
+export const store = createStore({ name: 'store' }, withProps<State>({ projects: [], tasks: [] }));
 
 export const persist = persistState(store, {
   key: 'store',
   runGuard: () => true,
   storage: {
-    setItem: async (key: string, value: any) => {
-      try {
-        return await db.put(key, serialize(value));
-      } catch (e) {
-        console.log(e);
-      }
-    },
     getItem: async <State>(key: string) => {
-      try {
-        return (await deserialize((await db.get(key)).toString())) as any as State;
-      } catch (e) {
-        console.error(e);
-        return initialState;
-      }
+      ipcRenderer.send('get-store');
+      return await new Promise<State>((resolve) =>
+        ipcRenderer.on('get-store-response', (event, val: State) => {
+          resolve(val);
+        })
+      );
+    },
+    setItem: async (key: string, value: State) => {
+      ipcRenderer.send('set-store', value);
+      return true;
     },
     removeItem: async (key: string) => {
-      try {
-        return await db.del(key);
-      } catch {
-        return false;
-      }
+      ipcRenderer.send('remove-store');
+      return true;
     },
   },
-  // storage: sessionStorageStrategy,
-  /* storage: {
-    getItem: async <T extends Record<string, any>>(key: string) => {
-      const res = electronStore.get(key) as T;
-      return res;
-    },
-    setItem: async (key: string, value: any) => {
-      if (value?.workingTask?.interval) {
-        value.workingTask.interval = undefined;
-      }
-      electronStore.set(key, value);
-      return true;
-    },
-    removeItem: async (key: string) => {
-      electronStore.delete(key);
-      return true;
-    },
-  }, */
 });
 
 export class Repository {
@@ -118,18 +84,5 @@ export class Repository {
     }));
   }
 }
-
-/* ipcMain.on('set-store', (event, value: State) => {
-  console.log('set-store', value);
-  store.update((state) => value);
-});
-
-ipcMain.on('get-store', (event) => {
-  event.reply(store.getValue());
-});
-
-ipcMain.on('remove-store', (event, value: State) => {
-  store.update((state) => initialState);
-}); */
 
 export const repository = new Repository();

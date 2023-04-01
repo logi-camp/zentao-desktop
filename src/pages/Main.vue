@@ -5,6 +5,7 @@ import { computed, reactive, watch } from 'vue';
 import { ipcRenderer } from 'electron';
 import TaskCMP from './Task.vue';
 import ProjectCMP from './Project.vue';
+import { repository } from '../store';
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
   console.log(arg); // prints "pong"
@@ -25,6 +26,7 @@ const getTasks = async () => {
     ipcRenderer.send('open-login-window', 'ping');
   } else {
     console.log('tasks', result.data);
+    repository.updateTasks(result.data?.tasks);
     state.tasks = result.data?.tasks;
 
     if (result.data) {
@@ -57,28 +59,25 @@ ipcRenderer.on('select-project', (event, projectId?: number) => {
   state.selectedProjectId = projectId;
 });
 
-watch(
-  state,
-  ({ projects, selectedProjectId, tasks, selectedTaskId }) => {
-    console.log('watch project');
-    if (state.selectedProjectId) {
-      tasks = tasks?.filter((task) => {
-        return Number.parseInt(task.project) == state.selectedProjectId;
-      });
-    }
-    ipcRenderer.send(
-      'update-menu',
-      JSON.parse(
-        JSON.stringify({
-          selectedProjectId,
-          projects,
-          tasks,
-          selectedTaskId,
-        })
-      )
-    );
+watch(state, ({ projects, selectedProjectId, tasks, selectedTaskId }) => {
+  console.log('watch project');
+  if (state.selectedProjectId) {
+    tasks = tasks?.filter((task) => {
+      return Number.parseInt(task.project) == state.selectedProjectId;
+    });
   }
-);
+  ipcRenderer.send(
+    'update-menu',
+    JSON.parse(
+      JSON.stringify({
+        selectedProjectId,
+        projects,
+        tasks,
+        selectedTaskId,
+      })
+    )
+  );
+});
 
 init();
 
