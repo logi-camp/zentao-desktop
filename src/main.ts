@@ -1,7 +1,8 @@
 import { createApp } from 'vue'
-import "./style.css"
+import "./css/style.sass"
 import App from './App.vue'
-import './samples/node-api'
+import 'virtual:windi.css'
+
 
 createApp(App)
   .mount('#app')

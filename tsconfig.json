@@ -13,7 +13,7 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src"],
+  "include": ["src", "src/zentao-api", "src/store"],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

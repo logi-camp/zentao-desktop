@@ -1,7 +1,10 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { release } from 'node:os'
-import { join } from 'node:path'
-
+import { join } from 'path'
+import handleLogin from './handleLogin'
+import handleNativePage from './handleNativePage'
+import handleTrayMenu from './handleTrayMenu'
+import handleBar from './handleBar';
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -49,9 +52,26 @@ async function createWindow() {
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
+      webSecurity: false,
       nodeIntegration: true,
       contextIsolation: false,
     },
+  })
+
+  handleLogin(app, win)
+  handleNativePage(app, win);
+  handleTrayMenu(app);
+  handleBar(app);
+
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    details.responseHeaders['Cross-Origin-Opener-Policy'] = ['same-origin'];
+    details.responseHeaders['Cross-Origin-Embedder-Policy'] = ['require-corp'];
+    callback({ responseHeaders: details.responseHeaders });
+  });
+
+  win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+    details.requestHeaders["cookie"] = "zentaosid=a239fe97d809371ca27611199d5b4c6f";
+    callback({ requestHeaders: details.requestHeaders })
   })
 
   if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
@@ -98,6 +118,11 @@ app.on('activate', () => {
     createWindow()
   }
 })
+
+app.on("browser-window-created", (event, window) => {
+  console.log("wind", window)
+  //window.setIcon(path.join(__dirname, 'res/applogo.png'))
+});
 
 // New window example arg: new windows url
 ipcMain.handle('open-win', (_, arg) => {
