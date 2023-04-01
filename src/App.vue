@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Main from './pages/Main.vue';
 import Bar from './pages/Bar.vue';
-import repository from './store'
 
 let page = 'Main';
 
