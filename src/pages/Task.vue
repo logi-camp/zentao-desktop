@@ -12,7 +12,7 @@
   </li>
 </template>
 <script lang="ts" setup>
-import { Task } from '../zentao-api/src/types';
+import { Task } from '../api/types';
 
 defineProps<{ task: Task; selected?: number }>();
 defineEmits<{ (e: 'select'): void }>();

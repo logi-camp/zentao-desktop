@@ -13,7 +13,7 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "src/zentao-api", "src/store"],
+  "include": ["src", "src/api", "src/store", "electron/main/store.ts"],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

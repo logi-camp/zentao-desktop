@@ -19,7 +19,7 @@
   </li>
 </template>
 <script lang="ts" setup>
-import { Project } from '../zentao-api/src/types';
+import { Project } from '../api/types';
 
 const props = defineProps<{ project: Project; selected?: number }>();
 defineEmits<{ (e: 'update:selected'): void }>();

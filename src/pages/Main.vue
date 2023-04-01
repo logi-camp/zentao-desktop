@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Zentao12 } from '../../src/zentao-api/src';
-import { Project, Task } from '../../src/zentao-api/src/types';
+import { Zentao12 } from '../../src/api';
+import { Project, Task } from '../../src/api/types';
 import { computed, reactive, watch } from 'vue';
 import { ipcRenderer } from 'electron';
 import TaskCMP from './Task.vue';

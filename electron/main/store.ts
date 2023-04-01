@@ -1,6 +1,6 @@
 import { createStore, withProps, select } from '@ngneat/elf';
 import { persistState, localStorageStrategy, StateStorage, sessionStorageStrategy } from '@ngneat/elf-persist-state';
-import { Project, Task } from '../zentao-api/src/types';
+import { Project, Task } from '../../src/api/types';
 import ElectronStore from 'electron-store';
 import { isTemplateNode } from '@vue/compiler-core';
 

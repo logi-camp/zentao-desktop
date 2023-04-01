@@ -1,7 +1,7 @@
 import { Menu, nativeImage, nativeTheme, Tray, ipcMain, MenuItem } from 'electron';
 import path from 'path';
-import { Project, Task } from '../../src/zentao-api/src/types';
-import { repository } from '../../src/store/store';
+import { Project, Task } from '../../src/api/types';
+import { repository } from './store';
 
 let contextMenu: Electron.Menu;
 let tray: Tray;
