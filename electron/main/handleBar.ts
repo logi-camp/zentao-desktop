@@ -11,6 +11,7 @@ export default (app: Electron.App) => {
 
   const win = new BrowserWindow({
     frame: false,
+    type: "toolbar",
     fullscreenable: false,
     width: 500,
     height: 24,

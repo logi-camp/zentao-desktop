@@ -1,6 +1,6 @@
 <template>
   <li
-    p="3"
+    p="y-1 x-3"
     :class="{ selected: project.id === (selected ? `${selected}` : undefined) }"
     cursor="pointer"
     @click="$emit('update:selected', Number.parseInt(project.id))"
