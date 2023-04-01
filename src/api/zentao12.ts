@@ -44,16 +44,14 @@ export default class ZentaoApi extends Zentao {
 
   getMyWorkTasks(params?: {}): Promise<ZentaoApiResult> {
     return this.module('my', 'work-task')
-      .withParams([[]])
-      .filterFields()
+      .withParams([])
       .get();
   }
 
 
   getMyProjects(params?: {}): Promise<ZentaoApiResult> {
     return this.module('my', 'project')
-      .withParams([[]])
-      .filterFields()
+      .withParams([])
       .get();
   }
 }

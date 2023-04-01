@@ -34,17 +34,17 @@ export interface ZentaoApiResult {
      * @remarks
      * 如果为 `0` 则表示操作请求失败，如果为 `1`，表示操作请求成功
      */
-    status: 0 | 1;
+    status: "success" | "error";
 
     /**
      * 服务器返回的描述结果的文本
      */
-    msg?: any;
+    md5?: string;
 
     /**
      * 请求结果数据
      */
-    result?: any;
+    data?: any;
 }
 
 /**
