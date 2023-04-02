@@ -4,10 +4,8 @@ import Bar from './pages/Bar.vue';
 
 let page = 'Main';
 
-
-if (window.location.href.endsWith('bar')) {
+if (window.location.href.endsWith('bar') || location.hash == 'bar') {
   page = 'Bar';
-} else {
 }
 </script>
 
@@ -16,6 +14,4 @@ if (window.location.href.endsWith('bar')) {
   <Bar v-else />
 </template>
 
-<style lang="ts" setup>
-
-</style>
+<style lang="ts" setup></style>

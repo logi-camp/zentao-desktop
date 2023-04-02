@@ -7,8 +7,7 @@ import pkg from './package.json';
 import WindiCSS from 'vite-plugin-windicss';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import path from 'node:path';
-import multiple from 'vite-plugin-multiple'
-
+import multiple from 'vite-plugin-multiple';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
@@ -48,6 +47,10 @@ export default defineConfig(({ command }) => {
                 targets: [
                   {
                     src: 'public',
+                    dest: './',
+                  },
+                  {
+                    src: 'bar.html',
                     dest: './',
                   },
                 ],
@@ -92,8 +95,12 @@ export default defineConfig(({ command }) => {
       ]), */
     ],
     build: {
-      rollupOptions: {
-        input: path.join(__dirname, 'html/index.html'),
+      modulePreload: {
+        polyfill: true,
+        resolveDependencies: (fileName: string, deps: string[]) => {
+          console.log(1, 'resolveDep', fileName, deps);
+          return deps;
+        },
       },
     },
     server:

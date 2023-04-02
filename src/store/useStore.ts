@@ -25,7 +25,7 @@ export default () => {
     persistState(store, {
       key: 'store',
       runGuard: () => true,
-      source: () => store.pipe(debounceTime(1000)),
+      source: () => store.pipe(debounceTime(100)),
       storage: {
         getItem: async <State>(key: string) => {
           ipcRenderer.send('get-store');

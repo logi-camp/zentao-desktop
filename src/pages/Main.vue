@@ -10,10 +10,6 @@ import useRepo from '../store/useRepo';
 
 const repository = useRepo();
 
-ipcRenderer.on('asynchronous-reply', (event, arg) => {
-  console.log(arg); // prints "pong"
-});
-
 const zentao = new Zentao12({ url: 'https://zentao.logicamp.top', account: 'mohamad', password: 'thu6xeiR' });
 
 const getTasks = async () => {

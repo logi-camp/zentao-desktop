@@ -12,6 +12,12 @@
     "dist-electron",
     "dist"
   ],
+  "linux": {
+      "icon": "public/icon.svg",
+      "target": [
+        "pacman"
+      ]
+  },
   "mac": {
     "artifactName": "${productName}_${version}.${ext}",
     "target": [

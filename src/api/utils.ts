@@ -155,7 +155,7 @@ export function normalizeRequestParams(
 ): ZentaoRequestParamPair[] {
     let normalizedParams: ZentaoRequestParamPair[] = [];
     if (typeof params === 'string') {
-        params = querystring.parse(params);
+        //params = querystring.parse(params);
     }
     if (params && typeof params === 'object') {
         if (Array.isArray(params)) {

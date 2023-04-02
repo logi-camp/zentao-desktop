@@ -8,7 +8,6 @@ import {
   ZentaoRequestParams,
   ZentaoRequestType,
 } from './types';
-import querystring from 'querystring';
 import { formatZentaoUrl, normalizeRequestParams, slimmingObject } from './utils';
 import ZentaoConfig from './zentao-config';
 import ZentaoRequestBuilder from './zentao-request-builder';
@@ -322,7 +321,7 @@ export default class Zentao {
           formData[key] = value;
         }
       }
-      data = querystring.stringify(formData);
+      //data = querystring.stringify(formData);
     }
 
     try {
@@ -480,7 +479,7 @@ export default class Zentao {
       let { data } = atrributes;
       logLines.push(`\n  ${kleur.bold().blue('Request Data')}`);
       if (typeof data === 'string') {
-        data = querystring.parse(data);
+        //data = querystring.parse(data);
       }
       for (const key of Object.keys(data)) {
         const value = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
