@@ -1,4 +1,6 @@
-import { ZentaoApiResult } from './types';
+import _ from 'lodash';
+import useRepo from '../store/useRepo';
+import { EffortListData, ZentaoApiResult } from './types';
 import Zentao from './zentao';
 
 /**
@@ -41,15 +43,42 @@ export default class ZentaoApi extends Zentao {
   }
 
   getMyWorkTasks(params?: {}): Promise<ZentaoApiResult> {
-    return this.module('my', 'work-task')
-      .withParams([])
-      .get();
+    return this.module('my', 'work-task').withParams([]).get();
   }
 
-
   getMyProjects(params?: {}): Promise<ZentaoApiResult> {
-    return this.module('my', 'project')
-      .withParams([])
-      .get();
+    return this.module('my', 'project').withParams([]).get();
+  }
+
+  getEffortList(params: { taskId: string }): Promise<ZentaoApiResult<EffortListData>> {
+    return this.module('task', 'recordEstimate')
+      .withParams([['taskID', params.taskId]])
+      .get() as unknown as Promise<ZentaoApiResult<EffortListData>>;
+  }
+
+  addEfforts(params: {
+    taskId: string;
+    data: { dates: string; id: string; work: string; consumed: string; left: string }[];
+  }): Promise<ZentaoApiResult<EffortListData>> {
+    console.log('addEfforts', params);
+    const data = _.range(1, 5).reduce(
+      (acm, v, index) => [
+        ...acm,
+        {
+          dates: params.data?.[index]?.dates,
+          work: params.data?.[index]?.work,
+          consumed: params.data?.[index]?.consumed,
+          left: params.data?.[index]?.left,
+          id: index + 1,
+        },
+      ],
+
+      [null]
+    );
+    console.log('reduce', JSON.parse(JSON.stringify(data)));
+    return this.module('task', 'recordEstimate')
+      .withParams([['taskID', params.taskId]])
+      .withData(data)
+      .request('POST') as unknown as Promise<ZentaoApiResult<EffortListData>>;
   }
 }

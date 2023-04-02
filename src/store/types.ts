@@ -1,12 +1,16 @@
 import { Project, Task } from '../api/types';
 
 export type State = {
-  readonly projects: Project[];
-  readonly selectedProjectId?: number;
-  readonly tasks: Task[];
-  readonly selectedTaskId?: number;
-  readonly workingTask?: {
+  projects: Project[];
+  selectedProjectId?: number;
+  tasks: Task[];
+  selectedTaskId?: number;
+  workingTask?: {
     taskId: number;
     started: Date;
+    seconds: number;
   };
+  showWorkingTaskBar: boolean;
+  apiUrl?: string;
+  logs: {args: any[], date: Date }[]
 };

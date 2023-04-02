@@ -1,24 +1,47 @@
 <template>
-  <li @click="repository.updateSelectedTaskId(task.id ? Number.parseInt(task.id) : undefined)" :class="{ selected }">
+  <li
+    @click="
+      repo.selectedTaskId_.value && `${repo.selectedTaskId_.value}` === task.id
+        ? repo.deselectTask()
+        : repo.updateSelectedTaskId(task.id ? Number.parseInt(task.id) : undefined)
+    "
+    :class="{ selected }"
+  >
     <div class="progress" :style="`width: ${task.progress}%;`"></div>
     <div display="flex" gap="1" align="items-center" z="1" p="x-2 y-1" pos="relative">
       <span text="sm gray-200" class="abbr" p="x-1 y-0">#{{ task.id }}</span>
       <span>{{ task.name }}</span>
-      <span>{{ task.project }}</span>
       <span class="chips" text="12px" :class="task.status" display="inline-block" :bg="task.status">
         {{ task.status }}
+      </span>
+      <span>
+        {{ state.effortResult?.efforts.length }}
       </span>
     </div>
   </li>
 </template>
 <script lang="ts" setup>
-import { Task } from '../api/types';
+import { reactive } from 'vue';
+import { Zentao12 } from '../api';
+import { Task, EffortListData } from '../api/types';
 import useRepo from '../store/useRepo';
 
-const repository = useRepo();
+const repo = useRepo();
 
-defineProps<{ task: Task; selected?: boolean }>();
+const zentao = new Zentao12({ url: 'https://zentao.logicamp.top' });
+
+const props = defineProps<{ task: Task; selected?: boolean }>();
+
+zentao.getEffortList({ taskId: props.task.id }).then((result) => {
+  state.effortResult = result.data;
+});
+
+const state = reactive<{
+  effortResult?: EffortListData;
+}>({});
+
 defineEmits<{ (e: 'select'): void }>();
+
 </script>
 <style lang="sass" scoped>
 .done

@@ -2,7 +2,6 @@ import { Menu } from 'electron';
 import useRepo from './store/useRepo';
 import useTray from './useTray';
 
-
 let contextMenu: Electron.Menu;
 let interval: NodeJS.Timer;
 
@@ -13,7 +12,7 @@ export default async (app: Electron.App) => {
         label: state.workingTask
           ? `Click to stop working ${Math.round(
               (new Date().getTime() -
-                (state.workingTask?.started?.getTime?.() || new Date(state.workingTask.started).getTime())) /
+                (state.workingTask?.started?.getTime?.() || new Date(state.workingTask?.started).getTime())) /
                 1000
             )}s`
           : 'Click to start working',
@@ -25,6 +24,7 @@ export default async (app: Electron.App) => {
             useRepo().updateWorkingTask({
               taskId: state.selectedTaskId,
               started: new Date(),
+              seconds: 0,
             });
           } else {
             clearInterval(interval);

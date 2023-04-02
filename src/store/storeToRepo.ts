@@ -1,6 +1,15 @@
 import { select, Store } from '@ngneat/elf';
 import { useObservable } from '@vueuse/rxjs';
+import { filter, interval, map, withLatestFrom } from 'rxjs';
+import { Zentao12 } from '../api';
 import { State } from './types';
+import { ipcRenderer } from 'electron';
+import { Project } from '../api/types';
+import serialize from 'serialize-javascript';
+
+function deserialize(serializedJavascript) {
+  return eval('(' + serializedJavascript + ')');
+}
 
 export default (
   store: Store<
@@ -21,10 +30,19 @@ export default (
       select((state) => state.tasks.find((task) => task.id === `${state.selectedTaskId}`))
     );
     readonly selectedTask_ = useObservable(this.selectedTask$);
+
     readonly selectedProjectId$ = store.pipe(select((state) => state.selectedProjectId));
     readonly selectedProjectId_ = useObservable(this.selectedProjectId$);
+
     readonly workingTask$ = store.pipe(select((state) => state.workingTask));
+
+    readonly amIWorking$ = store.pipe(select((state) => !!state.workingTask?.started));
+    readonly amIworking_ = useObservable(this.amIWorking$);
+
+    readonly workingTask_ = useObservable(this.workingTask$);
+
     readonly menuState$ = store.pipe(select((state) => state));
+
     readonly selectedProjectTasks$ = store.pipe(
       select((state) => {
         if (state.selectedProjectId) {
@@ -36,21 +54,119 @@ export default (
         }
       })
     );
+
+    readonly workingSeconds$ = interval(1000)
+      .pipe(withLatestFrom(store.pipe(select((state) => state.workingTask)).pipe(filter((state) => !!state?.started))))
+      .pipe(map(([, a]) => a))
+      .pipe(
+        select((workingTask) =>
+          workingTask?.started ? Math.round((new Date().getTime() - workingTask?.started?.getTime()) / 1000) : undefined
+        )
+      );
+
+    readonly workingSeconds_ = useObservable(this.workingSeconds$);
+
     readonly selectedProjectTasks_ = useObservable(this.selectedProjectTasks$);
     readonly selectedTaskId_ = useObservable(this.selectedTaskId$);
 
-    updateTasks(tasks: State['tasks']) {
+    readonly logs$ = store.pipe(select((state) => state.logs));
+    readonly latestLog$ = store
+      .pipe(select((state) => state.logs))
+      .pipe(map((logs) => logs?.[logs?.length - 1]))
+      .pipe(map((log) => ({ ...log, args: log?.args.map((item) => deserialize(item)) })));
+    readonly latestLog_ = useObservable(this.latestLog$);
+
+    async log(...args: any[]) {
       store.update((state) => ({
         ...state,
-        tasks,
+        logs: [...(state.logs || []), { date: new Date(), args: args.map((item) => serialize(item)) }],
       }));
     }
 
+    async getTasks() {
+      const result = await repo.zentao_.value?.getMyWorkTasks({});
+      if (result.data?.locate) {
+        ipcRenderer.send('open-login-window', 'ping');
+      } else {
+        console.log('tasks', result.data);
+        store.update((state) => ({
+          ...state,
+          tasks: result.data?.tasks,
+        }));
+      }
+    }
+
+    async getProjects() {
+      const result = await repo.zentao_.value?.getMyProjects({});
+      if (result.data?.locate) {
+        ipcRenderer.send('open-login-window', 'ping');
+      } else {
+        console.log('res', result.data);
+        repo.updateProjects([
+          ...(Object.values(result.data.projects) as Project[]),
+          { name: 'All', id: undefined } as unknown as Project,
+        ]);
+      }
+    }
+
+    startTask() {
+      store.update((state) => {
+        if (!state.selectedTaskId) return state;
+        return {
+          ...state,
+          workingTask: { started: new Date(), taskId: state.selectedTaskId, seconds: 0 },
+        };
+      });
+    }
+
+    async stopTask() {
+      this.log({s: 'stopTask'});
+      try {
+        const result = await this.zentao_.value.addEfforts({
+          taskId: `${this.workingTask_.value.taskId}`,
+          data: [
+            {
+              dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
+              id: '0',
+              work: 'Test Desktop App',
+              consumed: `1`,
+              left: '1',
+            },
+          ],
+        });
+      } catch (e) {
+        console.log('stopTaskError', e);
+      }
+      store.update((state) => {
+        return {
+          ...state,
+          workingTask: undefined,
+        };
+      });
+    }
+
     updateSelectedTaskId(selectedTaskId: State['selectedTaskId']) {
-      store.update((state) => ({
-        ...state,
-        selectedTaskId,
-      }));
+      store.update((state) => {
+        if (state.workingTask?.started) {
+          return state;
+        }
+        return {
+          ...state,
+          selectedTaskId,
+        };
+      });
+    }
+
+    deselectTask() {
+      store.update((state) => {
+        if (state.workingTask?.started) {
+          return state;
+        }
+        return {
+          ...state,
+          selectedTaskId: undefined,
+        };
+      });
     }
 
     updateProjects(projects: State['projects']) {
@@ -73,6 +189,30 @@ export default (
         workingTask,
       }));
     }
+
+    saveApiUrl(apiUrl: string) {
+      store.update((state) => ({
+        ...state,
+        apiUrl,
+      }));
+    }
+
+    apiUrl_ = useObservable(store.pipe(select((state) => state.apiUrl)));
+
+    zentao$ = store
+      .pipe(select((state) => state.apiUrl))
+      .pipe(filter((url) => !!url))
+      .pipe(
+        map((url) => {
+          const zentao = new Zentao12({ url });
+          zentao.fetchConfig();
+          return zentao;
+        })
+      );
+    zentao_ = useObservable(this.zentao$);
   }
-  return new Repository();
+
+  const repo = new Repository();
+
+  return repo;
 };

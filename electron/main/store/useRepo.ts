@@ -6,6 +6,10 @@ let repo: ReturnType<typeof storeToRepo>;
 export default () => {
   if (!repo) {
     repo = storeToRepo(useStore());
+
+    repo.latestLog$.subscribe((log) => {
+      console.log(log?.date?.toISOString(), ...(log?.args || []));
+    });
   }
   return repo;
 };

@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 import kleur from 'kleur';
+import useRepo from '../store/useRepo';
 import {
   ZentaoApiResult,
   ZentaoOptions,
@@ -92,8 +93,6 @@ export default class Zentao {
     this._debug = options.debug ?? false;
 
     this._url = formatZentaoUrl(options.url);
-    this._account = options.account;
-    this._password = options.password;
 
     // 创建账号标识
     this._identifier = `${this.account}@${this._url}`;
@@ -286,6 +285,7 @@ export default class Zentao {
       fields?: string[];
     } = {}
   ): Promise<ZentaoApiResult> {
+    console.log('req', options.data);
     if (
       (!this._config || this._config?.isTokenExpired) &&
       `${moduleName}/${methodName}`.toLowerCase() !== 'user/login'
@@ -298,16 +298,16 @@ export default class Zentao {
         `Zentao config is empty, makesure to fetch config before request from ${moduleName}-${methodName}.`
       );
     }
+    let { data } = options;
 
     const params = normalizeRequestParams(options.params);
-    const url = options.url ?? this.createUrl(moduleName, methodName, params);
+    const url = options.url ?? this.createUrl(moduleName, methodName, params, data && typeof data === 'object');
     const name = options.name ?? `${moduleName}${methodName[0].toUpperCase()}${methodName.substr(1)}`;
     const method = options.method ?? 'GET';
     const headers = {
       //Cookie: this._config.tokenAuth,
     };
 
-    let { data } = options;
     if (data && typeof data === 'object') {
       const formData: Record<string, any> = {};
       for (const key of Object.keys(data)) {
@@ -321,11 +321,11 @@ export default class Zentao {
           formData[key] = value;
         }
       }
-      //data = querystring.stringify(formData);
+      data = (await import('querystring')).default.stringify(formData,undefined,undefined,{});
     }
 
+    console.log({ url, data });
     try {
-      console.log({ url });
       const resp = await axios.request({
         method,
         url,
@@ -351,8 +351,6 @@ export default class Zentao {
         result = { status: 'success', md5: remoteData.md5, data: resp.data };
       }
 
-      console.log(1, { resp });
-
       if (options.resultConvertor) {
         result = options.resultConvertor(remoteData, result);
       }
@@ -373,8 +371,6 @@ export default class Zentao {
         }
       }
 
-      console.log(3, { resp });
-
       this._log(name, { url, result, params, data, resp });
       return result;
     } catch (error) {
@@ -390,7 +386,12 @@ export default class Zentao {
    * @param params 其他参数
    * @returns 请求地址
    */
-  createUrl(moduleName: string, methodName: string = 'index', params?: ZentaoRequestParamPair[]): string {
+  createUrl(
+    moduleName: string,
+    methodName: string = 'index',
+    params?: ZentaoRequestParamPair[],
+    onlyBody?: boolean
+  ): string {
     const config = this._config;
     if (!config) {
       throw new Error('Zentao config is empty, makesure fetch config before call others api.');
@@ -404,7 +405,14 @@ export default class Zentao {
           urlParts.push(config.requestFix, paramPair[1]);
         }
       }
-      urlParts.push('.json');
+      
+      if (onlyBody) {
+        urlParts.push('?onlybody=yes');
+        urlParts.push('.html');
+      }else{
+        urlParts.push('.json');
+      }
+
     } else {
       urlParts.push(`?${config.moduleVar}=${moduleName}&${config.methodVar}=${methodName}`);
       if (params) {
@@ -412,7 +420,15 @@ export default class Zentao {
           urlParts.push(`&${paramPair[0]}=${encodeURIComponent(paramPair[1])}`);
         }
       }
-      urlParts.push(`&${config.viewVar}=json`);
+
+      
+      
+      if (onlyBody) {
+        urlParts.push(`&${config.viewVar}=json`);
+        urlParts.push('?onlybody=yes');
+      }else{
+        urlParts.push(`&${config.viewVar}=json`);
+      }
     }
     return urlParts.join('');
   }
