@@ -13,4 +13,6 @@ export type State = {
   showWorkingTaskBar: boolean;
   apiUrl?: string;
   logs: {args: any[], date: Date }[]
+  customHeaders: Record<string,string>;
+  logingIn: boolean;
 };

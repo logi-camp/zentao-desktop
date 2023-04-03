@@ -1,4 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
+import { ipcRenderer } from 'electron';
 import kleur from 'kleur';
 import useRepo from '../store/useRepo';
 import {
@@ -283,6 +284,7 @@ export default class Zentao {
       url?: string;
       resultConvertor?: (remoteData: any, result: ZentaoApiResult) => ZentaoApiResult;
       fields?: string[];
+      headers?: Record<string, string>;
     } = {}
   ): Promise<ZentaoApiResult> {
     console.log('req', options.data);
@@ -304,9 +306,6 @@ export default class Zentao {
     const url = options.url ?? this.createUrl(moduleName, methodName, params, data && typeof data === 'object');
     const name = options.name ?? `${moduleName}${methodName[0].toUpperCase()}${methodName.substr(1)}`;
     const method = options.method ?? 'GET';
-    const headers = {
-      //Cookie: this._config.tokenAuth,
-    };
 
     if (data && typeof data === 'object') {
       const formData: Record<string, any> = {};
@@ -321,7 +320,7 @@ export default class Zentao {
           formData[key] = value;
         }
       }
-      data = (await import('querystring')).default.stringify(formData,undefined,undefined,{});
+      data = (await import('querystring')).default.stringify(formData, undefined, undefined, {});
     }
 
     console.log({ url, data });
@@ -330,7 +329,7 @@ export default class Zentao {
         method,
         url,
         data,
-        headers,
+        headers: options.headers,
       });
 
       let result: ZentaoApiResult;
@@ -371,6 +370,11 @@ export default class Zentao {
         }
       }
 
+      if (result?.data?.locate) {
+        useRepo().updateCustomHeaders(undefined);
+        ipcRenderer?.send('open-login-window', 'ping');
+      }
+
       this._log(name, { url, result, params, data, resp });
       return result;
     } catch (error) {
@@ -405,14 +409,13 @@ export default class Zentao {
           urlParts.push(config.requestFix, paramPair[1]);
         }
       }
-      
+
       if (onlyBody) {
         urlParts.push('?onlybody=yes');
         urlParts.push('.html');
-      }else{
+      } else {
         urlParts.push('.json');
       }
-
     } else {
       urlParts.push(`?${config.moduleVar}=${moduleName}&${config.methodVar}=${methodName}`);
       if (params) {
@@ -421,12 +424,10 @@ export default class Zentao {
         }
       }
 
-      
-      
       if (onlyBody) {
         urlParts.push(`&${config.viewVar}=json`);
         urlParts.push('?onlybody=yes');
-      }else{
+      } else {
         urlParts.push(`&${config.viewVar}=json`);
       }
     }

@@ -1,21 +1,22 @@
-import { BrowserWindow, screen } from 'electron';
+import { BrowserWindow, dialog, ipcMain, screen } from 'electron';
 import { join } from 'path';
 process.env.DIST_ELECTRON = join(__dirname, '..');
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
-const indexHtml = join(process.env.DIST, 'index.html#bar');
 const url = process.env.VITE_DEV_SERVER_URL;
 
 export default (app: Electron.App) => {
   let display = screen.getPrimaryDisplay();
 
+  
+
   const win = new BrowserWindow({
     frame: false,
     type: 'toolbar',
+    width: 24,
+    height: 450,
+    x: display.bounds.width - 24,
+    y: display.bounds.height - 580,
     fullscreenable: false,
-    width: 500,
-    height: 24,
-    x: display.bounds.width - 500,
-    y: display.bounds.height - 24,
     webPreferences: {
       nodeIntegration: true,
       webSecurity: false,
@@ -23,6 +24,7 @@ export default (app: Electron.App) => {
     },
     skipTaskbar: true,
     resizable: false,
+    transparent: true,
   });
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   win.setAlwaysOnTop(true, 'floating');
@@ -38,4 +40,9 @@ export default (app: Electron.App) => {
   win.setSkipTaskbar(true);
   win.moveTop();
   win.show();
+
+  ipcMain.on('show-task-effort-dialog',(event)=>{
+    dialog.showMessageBoxSync(win,{message: 'Enter the work and remaining time'})
+
+  })
 };

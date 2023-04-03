@@ -25,6 +25,7 @@ export default class ZentaoRequestBuilder {
   _resultConvertor?: (remoteData: any, result: ZentaoApiResult) => ZentaoApiResult;
   _url?: string;
   _name?: string;
+  _header?: Record<string,string>;
 
   /**
    * 创建一个禅道请求构建实例
@@ -124,6 +125,11 @@ export default class ZentaoRequestBuilder {
     return this;
   }
 
+  withHeaders(headers: Record<string,string>){
+    this._header = headers;
+    return this;
+  }
+
   /**
    * 追加请求参数
    * @param params 要追加的参数
@@ -216,6 +222,7 @@ export default class ZentaoRequestBuilder {
       resultConvertor: this._resultConvertor,
       name: this._name,
       url: this._url,
+      headers: this._header
     });
   }
 }

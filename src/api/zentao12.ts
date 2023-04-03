@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import useRepo from '../store/useRepo';
 import { EffortListData, ZentaoApiResult } from './types';
 import Zentao from './zentao';
@@ -61,24 +60,21 @@ export default class ZentaoApi extends Zentao {
     data: { dates: string; id: string; work: string; consumed: string; left: string }[];
   }): Promise<ZentaoApiResult<EffortListData>> {
     console.log('addEfforts', params);
-    const data = _.range(1, 5).reduce(
-      (acm, v, index) => [
-        ...acm,
-        {
-          dates: params.data?.[index]?.dates,
-          work: params.data?.[index]?.work,
-          consumed: params.data?.[index]?.consumed,
-          left: params.data?.[index]?.left,
-          id: index + 1,
-        },
-      ],
-
-      [null]
+    const data = params.data.reduce(
+      (acm, v) => ({
+        dates: [...acm.dates, v.dates],
+        work: [...acm.work, v.work],
+        consumed: [...acm.consumed, v.consumed],
+        left: [...acm.left, v.left],
+        id: [...acm.left, v.id]
+      }),
+      { dates: [], work: [], consumed: [], left: [] }
     );
     console.log('reduce', JSON.parse(JSON.stringify(data)));
     return this.module('task', 'recordEstimate')
       .withParams([['taskID', params.taskId]])
       .withData(data)
+      .withHeaders({ referer: this.url + '/task-recordEstimate-15.html?' })
       .request('POST') as unknown as Promise<ZentaoApiResult<EffortListData>>;
   }
 }

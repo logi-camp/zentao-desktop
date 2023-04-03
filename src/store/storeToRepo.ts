@@ -1,11 +1,12 @@
 import { select, Store } from '@ngneat/elf';
 import { useObservable } from '@vueuse/rxjs';
-import { filter, interval, map, withLatestFrom } from 'rxjs';
+import { debounceTime, filter, interval, map, throttle, withLatestFrom, defaultIfEmpty } from 'rxjs';
 import { Zentao12 } from '../api';
 import { State } from './types';
 import { ipcRenderer } from 'electron';
 import { Project } from '../api/types';
 import serialize from 'serialize-javascript';
+import _ from 'lodash';
 
 function deserialize(serializedJavascript) {
   return eval('(' + serializedJavascript + ')');
@@ -85,28 +86,24 @@ export default (
 
     async getTasks() {
       const result = await repo.zentao_.value?.getMyWorkTasks({});
-      if (result.data?.locate) {
-        ipcRenderer.send('open-login-window', 'ping');
-      } else {
-        console.log('tasks', result.data);
-        store.update((state) => ({
-          ...state,
-          tasks: result.data?.tasks,
-        }));
-      }
+      if (!result || result?.data?.locate) return;
+      console.log('tasks', result.data);
+      store.update((state) => ({
+        ...state,
+        tasks: result.data?.tasks,
+      }));
     }
 
     async getProjects() {
+      repo.updateProjects([]);
       const result = await repo.zentao_.value?.getMyProjects({});
-      if (result.data?.locate) {
-        ipcRenderer.send('open-login-window', 'ping');
-      } else {
-        console.log('res', result.data);
-        repo.updateProjects([
-          ...(Object.values(result.data.projects) as Project[]),
-          { name: 'All', id: undefined } as unknown as Project,
-        ]);
-      }
+      if (!result || result?.data?.locate) return;
+
+      console.log('res', result.data);
+      repo.updateProjects([
+        ...(Object.values(result.data.projects) as Project[]),
+        { name: 'All', id: undefined } as unknown as Project,
+      ]);
     }
 
     startTask() {
@@ -120,16 +117,16 @@ export default (
     }
 
     async stopTask() {
-      this.log({s: 'stopTask'});
+      this.log({ s: 'stopTask' });
       try {
-        const result = await this.zentao_.value.addEfforts({
+        const result = await this.zentao_.value?.addEfforts({
           taskId: `${this.workingTask_.value.taskId}`,
           data: [
             {
               dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
               id: '0',
               work: 'Test Desktop App',
-              consumed: `1`,
+              consumed: `${this.workingSeconds_.value / 3600}`,
               left: '1',
             },
           ],
@@ -197,7 +194,18 @@ export default (
       }));
     }
 
+    customHeaders$ = store.pipe(select((state) => state.customHeaders));
+    customHeaders_ = useObservable(this.customHeaders$);
+    updateCustomHeaders(headers: Record<string, string>) {
+      store.update((state) => ({
+        ...state,
+        customHeaders: headers,
+      }));
+    }
+
     apiUrl_ = useObservable(store.pipe(select((state) => state.apiUrl)));
+
+    useZentao() {}
 
     zentao$ = store
       .pipe(select((state) => state.apiUrl))
@@ -213,6 +221,19 @@ export default (
   }
 
   const repo = new Repository();
+
+  repo.customHeaders$
+  .pipe(debounceTime(100))
+    .subscribe((headers) => {
+      if (!headers?.['Cookie']) {
+        if (!store.query((state) => state.logingIn)) {
+          store.update((state) => ({ ...state, logingIn: true }));
+          ipcRenderer?.send('open-login-window', 'ping');
+        }
+      } else {
+        store.update((state) => ({ ...state, logingIn: false }));
+      }
+    });
 
   return repo;
 };

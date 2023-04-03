@@ -28,7 +28,7 @@ export default () => {
       source: () => store.pipe(debounceTime(100)),
       storage: {
         getItem: async <State>(key: string) => {
-          ipcRenderer.send('get-store');
+          ipcRenderer?.send('get-store');
           return await new Promise<State>((resolve) =>
             ipcRenderer.once('get-store-response', (event, val: State) => {
               resolve(val);
@@ -36,11 +36,11 @@ export default () => {
           );
         },
         setItem: async (key: string, value: State) => {
-          ipcRenderer.send('set-store', value);
+          ipcRenderer?.send('set-store', value);
           return true;
         },
         removeItem: async (key: string) => {
-          ipcRenderer.send('remove-store');
+          ipcRenderer?.send('remove-store');
           return true;
         },
       },

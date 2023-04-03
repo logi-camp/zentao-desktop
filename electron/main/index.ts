@@ -5,6 +5,8 @@ import handleLogin from './handleLogin';
 import handleNativePage from './handleNativePage';
 import handleTrayMenu from './handleTrayMenu';
 import handleBar from './handleBar';
+import useRepo from './store/useRepo';
+import { Subject, withLatestFrom } from 'rxjs';
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -41,6 +43,24 @@ const preload = join(__dirname, '../preload/index.js');
 const url = process.env.VITE_DEV_SERVER_URL;
 const indexHtml = join(process.env.DIST, 'index.html');
 
+const winSubject = new Subject<BrowserWindow>();
+
+useRepo()
+  .customHeaders$.pipe(withLatestFrom(winSubject))
+  .subscribe(([value, window]) => {
+    window.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+      //details.requestHeaders['Cookie'] = 'zentaosid=a239fe97d809371ca27611199d5b4c6f';
+      if (useRepo().customHeaders_.value) {
+        Object.entries(value).forEach(([k, v]) => {
+          console.log('inject header', k, v);
+          details.requestHeaders[k] = v;
+        });
+      }
+      details.requestHeaders['referer'] = 'https://zentao.logicamp.top/';
+      callback({ requestHeaders: details.requestHeaders });
+    });
+  });
+
 async function createWindow() {
   win = new BrowserWindow({
     title: 'Main window',
@@ -54,7 +74,10 @@ async function createWindow() {
       nodeIntegration: true,
       contextIsolation: false,
     },
+    width: 1300,
+    height: 800,
   });
+  winSubject.next(win);
 
   handleLogin(app, win);
   handleNativePage(app, win);
@@ -65,11 +88,6 @@ async function createWindow() {
     details.responseHeaders['Cross-Origin-Opener-Policy'] = ['same-origin'];
     details.responseHeaders['Cross-Origin-Embedder-Policy'] = ['require-corp'];
     callback({ responseHeaders: details.responseHeaders });
-  });
-
-  win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
-    details.requestHeaders['cookie'] = 'zentaosid=a239fe97d809371ca27611199d5b4c6f';
-    callback({ requestHeaders: details.requestHeaders });
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -83,7 +101,7 @@ async function createWindow() {
 
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', new Date().toLocaleString());
+    win?.webContents?.send('main-process-message', new Date().toLocaleString());
   });
 
   // Make all links open with the browser, not with the application
