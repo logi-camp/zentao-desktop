@@ -7,6 +7,7 @@ import handleTrayMenu from './handleTrayMenu';
 import handleBar from './handleBar';
 import useRepo from './store/useRepo';
 import { Subject, withLatestFrom } from 'rxjs';
+import handleWorkingTaskDialog from './handleWorkingTaskDialog';
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -52,11 +53,10 @@ useRepo()
       //details.requestHeaders['Cookie'] = 'zentaosid=a239fe97d809371ca27611199d5b4c6f';
       if (useRepo().customHeaders_.value) {
         Object.entries(value).forEach(([k, v]) => {
-          console.log('inject header', k, v);
           details.requestHeaders[k] = v;
         });
       }
-      details.requestHeaders['referer'] = 'https://zentao.logicamp.top/';
+      details.requestHeaders['referer'] = useRepo().apiUrl_.value;
       callback({ requestHeaders: details.requestHeaders });
     });
   });
@@ -83,6 +83,7 @@ async function createWindow() {
   handleNativePage(app, win);
   handleTrayMenu(app);
   handleBar(app);
+  handleWorkingTaskDialog(app, win);
 
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     details.responseHeaders['Cross-Origin-Opener-Policy'] = ['same-origin'];

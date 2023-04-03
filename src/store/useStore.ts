@@ -16,7 +16,17 @@ let store: Store<
 
 export default () => {
   if (!store) {
-    store = createStore({ name: 'store' }, withProps<State>({ projects: [], tasks: [] }));
+    store = createStore(
+      { name: 'store' },
+      withProps<State>({
+        projects: [],
+        tasks: [],
+        logingIn: false,
+        logs: [],
+        showWorkingTaskBar: true,
+        customHeaders: {},
+      })
+    );
     ipcRenderer.on('get-store-response', (event, val: State) => {
       if (!_.isEqual(val, store.getValue())) {
         store.update((state) => val);

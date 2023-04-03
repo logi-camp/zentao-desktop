@@ -1,6 +1,6 @@
 import { select, Store } from '@ngneat/elf';
 import { useObservable } from '@vueuse/rxjs';
-import { debounceTime, filter, interval, map, throttle, withLatestFrom, defaultIfEmpty } from 'rxjs';
+import { debounceTime, filter, interval, map, throttle, withLatestFrom, defaultIfEmpty, first, concatWith } from 'rxjs';
 import { Zentao12 } from '../api';
 import { State } from './types';
 import { ipcRenderer } from 'electron';
@@ -55,6 +55,14 @@ export default (
         }
       })
     );
+
+    readonly workingTaskDialogIsVisible$ = store.pipe(select((state) => state.workingTask?.dialogIsVisible));
+    openWorkingTaskDialog() {
+      store.update((state) => ({ ...state, workingTask: { ...state.workingTask, dialogIsVisible: true } }));
+    }
+    dialogClosed() {
+      store.update((state) => ({ ...state, workingTask: { ...state.workingTask, dialogIsVisible: false } }));
+    }
 
     readonly workingSeconds$ = interval(1000)
       .pipe(withLatestFrom(store.pipe(select((state) => state.workingTask)).pipe(filter((state) => !!state?.started))))
@@ -118,28 +126,41 @@ export default (
 
     async stopTask() {
       this.log({ s: 'stopTask' });
+
       try {
-        const result = await this.zentao_.value?.addEfforts({
-          taskId: `${this.workingTask_.value.taskId}`,
-          data: [
-            {
-              dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
-              id: '0',
-              work: 'Test Desktop App',
-              consumed: `${this.workingSeconds_.value / 3600}`,
-              left: '1',
-            },
-          ],
-        });
+        this.openWorkingTaskDialog();
+        this.workingTaskDialogIsVisible$
+          .pipe(filter((i) => !i))
+          .pipe(first())
+          .pipe(concatWith(this.workingTask$))
+          .pipe(
+            map(async (workingTask) => {
+              if (workingTask == false || workingTask == true) return;
+              const result = await this.zentao_.value?.addEfforts({
+                taskId: `${workingTask.taskId}`,
+                data: [
+                  {
+                    dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
+                    id: '0',
+                    work: 'Test Desktop App',
+                    consumed: `${workingTask.seconds / 3600}`,
+                    left: '1',
+                  },
+                ],
+              });
+            })
+          )
+          .subscribe(() => {
+            store.update((state) => {
+              return {
+                ...state,
+                workingTask: undefined,
+              };
+            });
+          });
       } catch (e) {
         console.log('stopTaskError', e);
       }
-      store.update((state) => {
-        return {
-          ...state,
-          workingTask: undefined,
-        };
-      });
     }
 
     updateSelectedTaskId(selectedTaskId: State['selectedTaskId']) {
@@ -203,7 +224,8 @@ export default (
       }));
     }
 
-    apiUrl_ = useObservable(store.pipe(select((state) => state.apiUrl)));
+    apiUrl$ = store.pipe(select((state) => state.apiUrl));
+    apiUrl_ = useObservable(this.apiUrl$);
 
     useZentao() {}
 
@@ -222,18 +244,16 @@ export default (
 
   const repo = new Repository();
 
-  repo.customHeaders$
-  .pipe(debounceTime(100))
-    .subscribe((headers) => {
-      if (!headers?.['Cookie']) {
-        if (!store.query((state) => state.logingIn)) {
-          store.update((state) => ({ ...state, logingIn: true }));
-          ipcRenderer?.send('open-login-window', 'ping');
-        }
-      } else {
-        store.update((state) => ({ ...state, logingIn: false }));
+  repo.customHeaders$.pipe(debounceTime(100)).subscribe((headers) => {
+    if (!headers?.['Cookie']) {
+      if (!store.query((state) => state.logingIn)) {
+        store.update((state) => ({ ...state, logingIn: true }));
+        ipcRenderer?.send('open-login-window', 'ping');
       }
-    });
+    } else {
+      store.update((state) => ({ ...state, logingIn: false }));
+    }
+  });
 
   return repo;
 };

@@ -1,4 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron';
+import useRepo from './store/useRepo';
 
 export default (app: Electron.App, mainWindow: BrowserWindow) => {
   ipcMain.on('open-native-page-window', (event, arg) => {
@@ -12,6 +13,6 @@ export default (app: Electron.App, mainWindow: BrowserWindow) => {
     loginWin.on('close', () => {
       event.reply('window-closed', '');
     });
-    loginWin.loadURL('https://zentao.logicamp.top');
+    loginWin.loadURL(useRepo().apiUrl_.value);
   });
 };

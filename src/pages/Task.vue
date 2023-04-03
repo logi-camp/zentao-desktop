@@ -28,20 +28,19 @@ import useRepo from '../store/useRepo';
 
 const repo = useRepo();
 
-const zentao = new Zentao12({ url: 'https://zentao.logicamp.top' });
-
 const props = defineProps<{ task: Task; selected?: boolean }>();
 
-zentao.getEffortList({ taskId: props.task.id }).then((result) => {
-  state.effortResult = result.data;
-});
+useRepo()
+  .zentao_.value?.getEffortList({ taskId: props.task.id })
+  .then((result) => {
+    state.effortResult = result.data;
+  });
 
 const state = reactive<{
   effortResult?: EffortListData;
 }>({});
 
 defineEmits<{ (e: 'select'): void }>();
-
 </script>
 <style lang="sass" scoped>
 .done

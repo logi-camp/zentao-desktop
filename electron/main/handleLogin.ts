@@ -11,7 +11,7 @@ const loginFlashChecker$ = loginFlasher$.pipe(
   }, 1)
 );
 
-zip([loginFlashChecker$, loginTrigger$])
+zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
   .pipe(
     map((v) => {
       console.log('loginPipe', v);
@@ -20,7 +20,7 @@ zip([loginFlashChecker$, loginTrigger$])
   )
   .pipe(distinctUntilKeyChanged(0))
   .pipe(debounceTime(1000))
-  .subscribe((val) => {
+  .subscribe(([loginFlash, loginTrigger, apiUrl]) => {
     const loginWin = new BrowserWindow({
       title: 'Login',
       webPreferences: {
@@ -33,7 +33,7 @@ zip([loginFlashChecker$, loginTrigger$])
     loginWin.on('close', () => {});
     loginWin.webContents.addListener('will-navigate', (event, url) => {
       console.log('url', url);
-      if (url === 'https://zentao.logicamp.top/') {
+      if (url?.replace(/\//g, '') === apiUrl?.replace(/\//g, '')) {
         loginWin.close();
         loginFlasher$.next();
       }
@@ -64,7 +64,7 @@ zip([loginFlashChecker$, loginTrigger$])
       } */
       callback({ responseHeaders: details.responseHeaders });
     });
-    loginWin.loadURL('https://zentao.logicamp.top/user-login.html');
+    loginWin.loadURL(apiUrl + '/user-login.html');
     loginWin.show();
   });
 

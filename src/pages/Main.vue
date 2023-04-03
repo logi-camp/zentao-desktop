@@ -42,17 +42,20 @@ const tasks = useObservable(repo.selectedProjectTasks$);
       <div h="100%" border="right-[1px] dashed var(--primary)"></div>
     </div>
   </div>
-  <div v-else>
-    {{ repo.zentao_.value }}
-    {{ repo.apiUrl_.value }}
+  <div v-else class="enter-url">
     <hr />
-    {{ state.url }}
-    <div>
-      <input v-model="state.url" />
+    <div display="flex" flex="col" p="6" gap="3" text="center">
+      <h4>Enter the Zentao URL</h4>
+      <span display="flex" gap="2">
+        URL:
+        <input v-model="state.url" flex="1" placeholder="https://zentao.example.com" />
+      </span>
       <button
+        border="1px var(--primary)"
         @click="
           () => {
             state.url && repo.saveApiUrl(state.url);
+            load();
           }
         "
       >
@@ -65,4 +68,7 @@ const tasks = useObservable(repo.selectedProjectTasks$);
 <style lang="sass" scoped>
 .main
   background: $background
+.enter-url
+  button
+    border: 1px solid $primary
 </style>

@@ -9,10 +9,13 @@ export type State = {
     taskId: number;
     started: Date;
     seconds: number;
+    work?: string;
+    left?: number;
+    dialogIsVisible?: boolean;
   };
   showWorkingTaskBar: boolean;
   apiUrl?: string;
-  logs: {args: any[], date: Date }[]
-  customHeaders: Record<string,string>;
+  logs: { args: any[]; date: Date }[];
+  customHeaders: Record<string, string>;
   logingIn: boolean;
 };
