@@ -1,13 +1,12 @@
 import { BrowserWindow, dialog, ipcMain, screen } from 'electron';
 import { join } from 'path';
+import useRepo from './store/useRepo';
 process.env.DIST_ELECTRON = join(__dirname, '..');
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
 const url = process.env.VITE_DEV_SERVER_URL;
 
 export default (app: Electron.App) => {
   let display = screen.getPrimaryDisplay();
-
-  
 
   const win = new BrowserWindow({
     frame: false,
@@ -31,7 +30,8 @@ export default (app: Electron.App) => {
   win.setMenu(null);
   if (process.env.VITE_DEV_SERVER_URL) {
     // electron-vite-vue#298
-    win.loadURL(url + '/bar');
+
+    win.loadURL(`${url}#bar`);
     // Open devTool if the app is not packaged
     //win.webContents.openDevTools();
   } else {
@@ -41,8 +41,11 @@ export default (app: Electron.App) => {
   win.moveTop();
   win.show();
 
-  ipcMain.on('show-task-effort-dialog',(event)=>{
-    dialog.showMessageBoxSync(win,{message: 'Enter the work and remaining time'})
-
-  })
+  ipcMain.on('show-task-effort-dialog', (event) => {
+    const result = dialog.showMessageBoxSync(win, {
+      message: 'Enter the work and remaining time',
+      buttons: ['OK', 'Cancel'],
+    });
+    event.reply('show-task-effort-dialog-reply', result);
+  });
 };
