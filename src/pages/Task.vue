@@ -15,7 +15,7 @@
         {{ task.status }}
       </span>
       <span>
-        {{ state.effortResult?.efforts.length }}
+        {{ state.effortResult?.efforts?.length }}
       </span>
     </div>
   </li>

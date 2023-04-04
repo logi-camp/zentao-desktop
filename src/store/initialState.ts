@@ -1,3 +1,10 @@
-import { State } from "./types";
+import { State } from './types';
 
-export default { projects: [], tasks: [] } as State;
+const initialState: State = {
+  projects: [],
+  tasks: [],
+  persistedStates: {},
+  preferences: { customHeaders: {}, showWorkingTaskBar: true },
+};
+
+export default initialState;

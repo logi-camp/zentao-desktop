@@ -1,7 +1,9 @@
 import { BrowserWindow } from 'electron';
-import { Subject, map, scan, zip, distinct, distinctUntilKeyChanged, combineLatest, debounceTime } from 'rxjs';
+import { map, debounceTime, distinct, filter } from 'rxjs';
 import useRepo from './store/useRepo';
 import { join } from 'path';
+process.env.DIST_ELECTRON = join(__dirname, '..');
+process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
 const url = process.env.VITE_DEV_SERVER_URL;
 
 export default (app: Electron.App, mainWindow: BrowserWindow) => {
@@ -12,31 +14,41 @@ export default (app: Electron.App, mainWindow: BrowserWindow) => {
         return v;
       })
     )
-    //.pipe(distinct())
+    .pipe(distinct())
     .pipe(debounceTime(1000))
+    .pipe(filter((v) => !!v))
     .subscribe(() => {
-      const dialogWin = new BrowserWindow({
-        title: 'Working Task',
+      const win = new BrowserWindow({
+        //frame: false,
+        //type: 'toolbar',
+        //width: 24,
+        //height: 450,
+        //x: display.bounds.width - 24,
+        //y: display.bounds.height - 580,
+        fullscreenable: false,
         webPreferences: {
+          nodeIntegration: true,
           webSecurity: false,
+          contextIsolation: false,
         },
-        width: 400,
-        height: 160,
-        show: false,
+        skipTaskbar: true,
+        resizable: false,
+        //transparent: true,
       });
-
+      win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      win.setAlwaysOnTop(true, 'floating');
+      win.setMenu(null);
       if (process.env.VITE_DEV_SERVER_URL) {
         // electron-vite-vue#298
-        dialogWin.loadURL(`${url}#workingtaskdialog`);
+
+        win.loadURL(`${url}#working-task-dialog`);
         // Open devTool if the app is not packaged
         //win.webContents.openDevTools();
       } else {
-        dialogWin.loadURL(`file://${join(__dirname, '../../dist/index.html#workingtaskdialog')}`);
+        win.loadURL(`file://${join(__dirname, '../../dist/index.html#working-task-dialog')}`);
       }
-
-      dialogWin.show();
-      dialogWin.addListener('close', () => {
-        useRepo().dialogClosed();
-      });
+      win.setSkipTaskbar(true);
+      win.moveTop();
+      win.show();
     });
 };

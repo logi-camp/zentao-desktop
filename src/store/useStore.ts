@@ -3,6 +3,7 @@ import { persistState } from '@ngneat/elf-persist-state';
 import { ipcRenderer } from 'electron';
 import _ from 'lodash';
 import { debounceTime } from 'rxjs';
+import initialState from './initialState';
 import { State } from './types';
 
 let store: Store<
@@ -16,17 +17,7 @@ let store: Store<
 
 export default () => {
   if (!store) {
-    store = createStore(
-      { name: 'store' },
-      withProps<State>({
-        projects: [],
-        tasks: [],
-        logingIn: false,
-        logs: [],
-        showWorkingTaskBar: true,
-        customHeaders: {},
-      })
-    );
+    store = createStore({ name: 'store' }, withProps<State>(initialState));
     ipcRenderer.on('get-store-response', (event, val: State) => {
       if (!_.isEqual(val, store.getValue())) {
         store.update((state) => val);

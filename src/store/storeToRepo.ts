@@ -26,18 +26,18 @@ export default (
     readonly state$ = store.pipe(select((state) => state));
     readonly tasks$ = store.pipe(select((state) => state.tasks));
     readonly projects$ = store.pipe(select((state) => state.projects));
-    readonly selectedTaskId$ = store.pipe(select((state) => state.selectedTaskId));
+    readonly selectedTaskId$ = store.pipe(select((state) => state.persistedStates.selectedTaskId));
     readonly selectedTask$ = store.pipe(
-      select((state) => state.tasks.find((task) => task.id === `${state.selectedTaskId}`))
+      select((state) => state.tasks.find((task) => task.id === `${state.persistedStates.selectedTaskId}`))
     );
     readonly selectedTask_ = useObservable(this.selectedTask$);
 
-    readonly selectedProjectId$ = store.pipe(select((state) => state.selectedProjectId));
+    readonly selectedProjectId$ = store.pipe(select((state) => state.persistedStates?.selectedProjectId));
     readonly selectedProjectId_ = useObservable(this.selectedProjectId$);
 
-    readonly workingTask$ = store.pipe(select((state) => state.workingTask));
+    readonly workingTask$ = store.pipe(select((state) => state.persistedStates?.workingTask));
 
-    readonly amIWorking$ = store.pipe(select((state) => !!state.workingTask?.started));
+    readonly amIWorking$ = store.pipe(select((state) => !!state.persistedStates?.workingTask?.started));
     readonly amIworking_ = useObservable(this.amIWorking$);
 
     readonly workingTask_ = useObservable(this.workingTask$);
@@ -46,9 +46,9 @@ export default (
 
     readonly selectedProjectTasks$ = store.pipe(
       select((state) => {
-        if (state.selectedProjectId) {
+        if (state.persistedStates?.selectedProjectId) {
           return state.tasks?.filter((task) => {
-            return Number.parseInt(task.project) == state.selectedProjectId;
+            return Number.parseInt(task.project) == state.persistedStates?.selectedProjectId;
           });
         } else {
           return state.tasks;
@@ -56,16 +56,53 @@ export default (
       })
     );
 
-    readonly workingTaskDialogIsVisible$ = store.pipe(select((state) => state.workingTask?.dialogIsVisible));
+    readonly workingTaskDialogIsVisible$ = store.pipe(select((state) => state.workingTaskDialogIsVisible));
     openWorkingTaskDialog() {
-      store.update((state) => ({ ...state, workingTask: { ...state.workingTask, dialogIsVisible: true } }));
+      store.update((state) => ({
+        ...state,
+        workingTaskDialogIsVisible: true,
+      }));
     }
     dialogClosed() {
-      store.update((state) => ({ ...state, workingTask: { ...state.workingTask, dialogIsVisible: false } }));
+      store.update((state) => ({
+        ...state,
+        workingTaskDialogIsVisible: false,
+      }));
+    }
+    async finishEffortDialog(work: string, left: number) {
+      /* store.update((state) => ({
+        ...state,
+        workingTask: { ...state.persistedStates.workingTask, left, work, dialogIsVisible: false },
+      })); */
+      const workingTask = store.query((state) => state.persistedStates?.workingTask);
+      const result = await this.zentao_.value?.addEfforts({
+        taskId: `${workingTask.taskId}`,
+        data: [
+          {
+            dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
+            id: '0',
+            work: work,
+            consumed: `${workingTask.seconds / 3600}`,
+            left: left.toString(),
+          },
+        ],
+      });
+      if (result.status && result.data) {
+        store.update((state) => {
+          return {
+            ...state,
+            workingTask: undefined,
+          };
+        });
+      }
     }
 
     readonly workingSeconds$ = interval(1000)
-      .pipe(withLatestFrom(store.pipe(select((state) => state.workingTask)).pipe(filter((state) => !!state?.started))))
+      .pipe(
+        withLatestFrom(
+          store.pipe(select((state) => state.persistedStates?.workingTask)).pipe(filter((state) => !!state?.started))
+        )
+      )
       .pipe(map(([, a]) => a))
       .pipe(
         select((workingTask) =>
@@ -116,17 +153,19 @@ export default (
 
     startTask() {
       store.update((state) => {
-        if (!state.selectedTaskId) return state;
+        if (!state.persistedStates.selectedTaskId) return state;
         return {
           ...state,
-          workingTask: { started: new Date(), taskId: state.selectedTaskId, seconds: 0 },
+          persistedStates: {
+            ...state.persistedStates,
+            workingTask: { started: new Date(), taskId: state.persistedStates.selectedTaskId, seconds: 0 },
+          },
         };
       });
     }
 
     async stopTask() {
       this.log({ s: 'stopTask' });
-
       try {
         this.openWorkingTaskDialog();
         this.workingTaskDialogIsVisible$
@@ -148,41 +187,39 @@ export default (
                   },
                 ],
               });
+              store.update((state) => {
+                return {
+                  ...state,
+                  workingTask: undefined,
+                };
+              });
             })
-          )
-          .subscribe(() => {
-            store.update((state) => {
-              return {
-                ...state,
-                workingTask: undefined,
-              };
-            });
-          });
+          );
       } catch (e) {
         console.log('stopTaskError', e);
       }
     }
 
-    updateSelectedTaskId(selectedTaskId: State['selectedTaskId']) {
+    updateSelectedTaskId(selectedTaskId: State['persistedStates']['selectedTaskId']) {
       store.update((state) => {
-        if (state.workingTask?.started) {
+        if (state.persistedStates?.workingTask?.started) {
           return state;
         }
         return {
           ...state,
-          selectedTaskId,
+          persistedStates: { ...state.persistedStates, selectedTaskId },
         };
       });
     }
 
     deselectTask() {
       store.update((state) => {
-        if (state.workingTask?.started) {
+        if (state.persistedStates?.workingTask?.started) {
           return state;
         }
         return {
           ...state,
-          selectedTaskId: undefined,
+          persistedStates: { ...state.persistedStates, selectedTaskId: undefined },
         };
       });
     }
@@ -194,43 +231,43 @@ export default (
       }));
     }
 
-    updateSelectedProjectId(selectedProjectId: State['selectedProjectId']) {
+    updateSelectedProjectId(selectedProjectId: State['persistedStates']['selectedProjectId']) {
       store.update((state) => ({
         ...state,
-        selectedProjectId,
+        persistedStates: { ...state.persistedStates, selectedProjectId },
       }));
     }
 
-    updateWorkingTask(workingTask: State['workingTask']) {
+    updateWorkingTask(workingTask: State['persistedStates']['workingTask']) {
       store.update((state) => ({
         ...state,
-        workingTask,
+        persistedStates: { ...state.persistedStates, workingTask },
       }));
     }
 
     saveApiUrl(apiUrl: string) {
       store.update((state) => ({
         ...state,
-        apiUrl,
+        preferences: { ...state.preferences, apiUrl },
       }));
     }
 
-    customHeaders$ = store.pipe(select((state) => state.customHeaders));
+    customHeaders$ = store.pipe(select((state) => state?.preferences?.customHeaders));
     customHeaders_ = useObservable(this.customHeaders$);
     updateCustomHeaders(headers: Record<string, string>) {
       store.update((state) => ({
         ...state,
-        customHeaders: headers,
+        preferences: { ...state.preferences, customHeaders: headers },
       }));
     }
 
-    apiUrl$ = store.pipe(select((state) => state.apiUrl));
+    apiUrl$ = store.pipe(select((state) => state.preferences.apiUrl)).pipe(filter((v) => !!v));
     apiUrl_ = useObservable(this.apiUrl$);
 
     useZentao() {}
 
     zentao$ = store
-      .pipe(select((state) => state.apiUrl))
+      .pipe(select((state) => state.preferences.apiUrl))
       .pipe(filter((url) => !!url))
       .pipe(
         map((url) => {

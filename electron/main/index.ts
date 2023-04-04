@@ -83,7 +83,7 @@ async function createWindow() {
   handleNativePage(app, win);
   handleTrayMenu(app);
   handleBar(app);
-  handleWorkingTaskDialog(app, win);
+  handleWorkingTaskDialog(app);
 
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     details.responseHeaders['Cross-Origin-Opener-Policy'] = ['same-origin'];

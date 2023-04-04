@@ -5,9 +5,10 @@ import _ from 'lodash';
 import { State } from '../../../src/store/types';
 import { createStore, Store, withProps } from '@ngneat/elf';
 import { app, ipcMain } from 'electron';
-import { persistState } from '@ngneat/elf-persist-state';
+import { persistState, excludeKeys } from '@ngneat/elf-persist-state';
 import initialState from '../../../src/store/initialState';
 import useRepo from './useRepo';
+import { map } from 'rxjs';
 
 function deserialize(serializedJavascript) {
   return eval('(' + serializedJavascript + ')');
@@ -30,6 +31,8 @@ export default () => {
 
     persistState(store, {
       key: 'store',
+      source: () =>
+        store.pipe(map((state) => ({ preferences: state.preferences, persistedStates: state.persistedStates }))),
       runGuard: () => true,
       storage: {
         setItem: async (key: string, value: any) => {

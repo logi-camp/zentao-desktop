@@ -48,7 +48,7 @@ const tasks = useObservable(repo.selectedProjectTasks$);
       <h4>Enter the Zentao URL</h4>
       <span display="flex" gap="2">
         URL:
-        <input v-model="state.url" flex="1" placeholder="https://zentao.example.com" />
+        <input v-model="state.url" flex="1" type="url" placeholder="https://zentao.example.com" />
       </span>
       <button
         border="1px var(--primary)"

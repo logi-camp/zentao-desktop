@@ -9,20 +9,21 @@ export default async (app: Electron.App) => {
   useRepo().state$.subscribe((state) => {
     contextMenu = Menu.buildFromTemplate([
       {
-        label: state.workingTask
+        label: state.persistedStates?.workingTask
           ? `Click to stop working ${Math.round(
               (new Date().getTime() -
-                (state.workingTask?.started?.getTime?.() || new Date(state.workingTask?.started).getTime())) /
+                (state.persistedStates?.workingTask?.started?.getTime?.() ||
+                  new Date(state.persistedStates?.workingTask?.started).getTime())) /
                 1000
             )}s`
           : 'Click to start working',
         type: 'checkbox',
-        checked: !!state.workingTask,
+        checked: !!state.persistedStates?.workingTask,
         click: () => {
           //updateMenu.reply('start-working', Number.parseInt(task.id));
-          if (!state.workingTask) {
+          if (!state.persistedStates?.workingTask) {
             useRepo().updateWorkingTask({
-              taskId: state.selectedTaskId,
+              taskId: state.persistedStates.selectedTaskId,
               started: new Date(),
               seconds: 0,
             });
@@ -39,7 +40,9 @@ export default async (app: Electron.App) => {
           state.tasks?.map((task) => ({
             id: 'task-' + task.id,
             label: task.name,
-            checked: (state.selectedTaskId ? `${state.selectedTaskId}` : undefined) === task.id,
+            checked:
+              (state.persistedStates?.selectedTaskId ? `${state.persistedStates?.selectedTaskId}` : undefined) ===
+              task.id,
             type: 'radio',
             click(menuItem, browserWindow, event) {
               useRepo().updateSelectedTaskId(task.id ? Number(task.id) : undefined);
@@ -53,7 +56,9 @@ export default async (app: Electron.App) => {
           state.projects?.map((project) => ({
             id: project.id,
             label: project.name,
-            checked: (state.selectedProjectId ? `${state.selectedProjectId}` : undefined) === project.id,
+            checked:
+              (state.persistedStates?.selectedProjectId ? `${state.persistedStates?.selectedProjectId}` : undefined) ===
+              project.id,
             type: 'radio',
             click(menuItem, browserWindow, event) {
               useRepo().updateSelectedProjectId(project.id ? Number.parseInt(project.id) : undefined);

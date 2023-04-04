@@ -9,12 +9,13 @@ if (location.hash.replace(/\#/g, '')) {
   page = location.hash.replace(/\#/g, '');
 }
 
+
 </script>
 
 <template>
   <Main v-if="page == 'Main'" />
-  <Bar v-else-if="page == 'bar'" />
-  <WorkingTaskDialog v-else-if="page == 'workingtaskdialog'" />
+  <Bar v-if="page == 'bar'" />
+  <WorkingTaskDialog v-if="page == 'working-task-dialog'" />
 </template>
 
 <style lang="ts" setup></style>

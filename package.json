@@ -53,6 +53,7 @@
     "ant-design-vue": "^3.2.16",
     "axios": "^1.3.4",
     "dateformat": "^5.0.3",
+    "electron-form-dialog": "^0.0.3-dev",
     "kleur": "^4.1.5",
     "leveldown": "^6.1.1",
     "levelup": "^5.1.1",

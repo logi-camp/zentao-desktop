@@ -2,20 +2,24 @@ import { Project, Task } from '../api/types';
 
 export type State = {
   projects: Project[];
-  selectedProjectId?: number;
   tasks: Task[];
-  selectedTaskId?: number;
-  workingTask?: {
-    taskId: number;
-    started: Date;
-    seconds: number;
-    work?: string;
-    left?: number;
-    dialogIsVisible?: boolean;
-  };
-  showWorkingTaskBar: boolean;
-  apiUrl?: string;
   logs: { args: any[]; date: Date }[];
-  customHeaders: Record<string, string>;
   logingIn: boolean;
+  workingTaskDialogIsVisible?: boolean;
+  persistedStates: {
+    selectedProjectId?: number;
+    selectedTaskId?: number;
+    workingTask?: {
+      taskId: number;
+      started: Date;
+      seconds: number;
+      work?: string;
+      left?: number;
+    };
+  },
+  preferences: {
+    apiUrl?: string;
+    customHeaders: Record<string, string>;
+    showWorkingTaskBar: boolean;
+  };
 };

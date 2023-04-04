@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron';
-import { Subject, map, scan, zip, distinct, distinctUntilKeyChanged, combineLatest, debounceTime } from 'rxjs';
+import { Subject, map, scan, zip, distinctUntilKeyChanged, debounceTime } from 'rxjs';
 import useRepo from './store/useRepo';
 
 const loginTrigger$ = new Subject<void>();
@@ -21,6 +21,7 @@ zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
   .pipe(distinctUntilKeyChanged(0))
   .pipe(debounceTime(1000))
   .subscribe(([loginFlash, loginTrigger, apiUrl]) => {
+    console.log('apiUrl', apiUrl)
     const loginWin = new BrowserWindow({
       title: 'Login',
       webPreferences: {
