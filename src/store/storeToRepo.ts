@@ -1,6 +1,17 @@
 import { select, Store } from '@ngneat/elf';
 import { useObservable } from '@vueuse/rxjs';
-import { debounceTime, filter, interval, map, throttle, withLatestFrom, defaultIfEmpty, first, concatWith } from 'rxjs';
+import {
+  debounceTime,
+  filter,
+  interval,
+  map,
+  throttle,
+  withLatestFrom,
+  defaultIfEmpty,
+  first,
+  concatWith,
+  distinct,
+} from 'rxjs';
 import { Zentao12 } from '../api';
 import { State } from './types';
 import { ipcRenderer } from 'electron';
@@ -56,7 +67,9 @@ export default (
       })
     );
 
-    readonly workingTaskDialogIsVisible$ = store.pipe(select((state) => state.workingTaskDialogIsVisible));
+    readonly workingTaskDialogIsVisible$ = store
+      .pipe(select((state) => state.workingTaskDialogIsVisible))
+      .pipe(distinct());
     openWorkingTaskDialog() {
       store.update((state) => ({
         ...state,
@@ -132,7 +145,6 @@ export default (
     async getTasks() {
       const result = await repo.zentao_.value?.getMyWorkTasks({});
       if (!result || result?.data?.locate) return;
-      console.log('tasks', result.data);
       store.update((state) => ({
         ...state,
         tasks: result.data?.tasks,
@@ -144,7 +156,6 @@ export default (
       const result = await repo.zentao_.value?.getMyProjects({});
       if (!result || result?.data?.locate) return;
 
-      console.log('res', result.data);
       repo.updateProjects([
         ...(Object.values(result.data.projects) as Project[]),
         { name: 'All', id: undefined } as unknown as Project,
@@ -168,33 +179,31 @@ export default (
       this.log({ s: 'stopTask' });
       try {
         this.openWorkingTaskDialog();
-        this.workingTaskDialogIsVisible$
-          .pipe(filter((i) => !i))
-          .pipe(first())
-          .pipe(concatWith(this.workingTask$))
-          .pipe(
-            map(async (workingTask) => {
-              if (workingTask == false || workingTask == true) return;
-              const result = await this.zentao_.value?.addEfforts({
-                taskId: `${workingTask.taskId}`,
-                data: [
-                  {
-                    dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
-                    id: '0',
-                    work: 'Test Desktop App',
-                    consumed: `${workingTask.seconds / 3600}`,
-                    left: '1',
-                  },
-                ],
-              });
-              store.update((state) => {
-                return {
-                  ...state,
-                  workingTask: undefined,
-                };
-              });
-            })
-          );
+        ipcRenderer.send('open-effort-detail-dialog');
+        ipcRenderer.on('open-effort-detail-dialog-reply', async (_event, data) => {
+          const workingTask = store.query((state) => state.persistedStates.workingTask);
+          workingTask.left = data.left;
+          workingTask.work = data.work;
+          const workingSeconds = store.query((state) => state);
+          const result = await this.zentao_.value?.addEfforts({
+            taskId: `${workingTask.taskId}`,
+            data: [
+              {
+                dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
+                id: '0',
+                work: workingTask.work,
+                consumed: `${this.workingSeconds_.value / 3600}`,
+                left: `${workingTask.left}`,
+              },
+            ],
+          });
+          store.update((state) => {
+            return {
+              ...state,
+              persistedStates: { workingTask: undefined },
+            };
+          });
+        });
       } catch (e) {
         console.log('stopTaskError', e);
       }

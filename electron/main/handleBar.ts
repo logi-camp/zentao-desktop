@@ -40,6 +40,9 @@ export default (app: Electron.App) => {
   win.setSkipTaskbar(true);
   win.moveTop();
   win.show();
+  win.addListener('close', () => {
+
+  });
 
   ipcMain.on('show-task-effort-dialog', (event) => {
     const result = dialog.showMessageBoxSync(win, {

@@ -98,7 +98,6 @@ export default defineConfig(({ command }) => {
       modulePreload: {
         polyfill: true,
         resolveDependencies: (fileName: string, deps: string[]) => {
-          console.log(1, 'resolveDep', fileName, deps);
           return deps;
         },
       },
@@ -107,7 +106,6 @@ export default defineConfig(({ command }) => {
       process.env.VSCODE_DEBUG &&
       (() => {
         const url = new URL(pkg.debug.env.VITE_DEV_SERVER_URL);
-        console.log('url', url);
 
         return {
           host: url.hostname,

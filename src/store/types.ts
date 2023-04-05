@@ -12,7 +12,6 @@ export type State = {
     workingTask?: {
       taskId: number;
       started: Date;
-      seconds: number;
       work?: string;
       left?: number;
     };

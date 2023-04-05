@@ -59,7 +59,6 @@ export default class ZentaoApi extends Zentao {
     taskId: string;
     data: { dates: string; id: string; work: string; consumed: string; left: string }[];
   }): Promise<ZentaoApiResult<EffortListData>> {
-    console.log('addEfforts', params);
     const data = params.data.reduce(
       (acm, v) => ({
         dates: [...acm.dates, v.dates],
@@ -74,7 +73,6 @@ export default class ZentaoApi extends Zentao {
     return this.module('task', 'recordEstimate')
       .withParams([['taskID', params.taskId]])
       .withData(data)
-      .withHeaders({ referer: this.url + '/task-recordEstimate-15.html?' })
       .request('POST') as unknown as Promise<ZentaoApiResult<EffortListData>>;
   }
 }

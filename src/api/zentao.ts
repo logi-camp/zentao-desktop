@@ -370,7 +370,7 @@ export default class Zentao {
         }
       }
 
-      if (result?.data?.locate) {
+      if (result?.data?.locate && result?.data?.locate.includes('user-login')) {
         useRepo().updateCustomHeaders(undefined);
         ipcRenderer?.send('open-login-window', 'ping');
       }
@@ -411,8 +411,8 @@ export default class Zentao {
       }
 
       if (onlyBody) {
-        urlParts.push('?onlybody=yes');
-        urlParts.push('.html');
+        urlParts.push('.json');
+        //urlParts.push('?onlybody=yes');
       } else {
         urlParts.push('.json');
       }
@@ -426,7 +426,7 @@ export default class Zentao {
 
       if (onlyBody) {
         urlParts.push(`&${config.viewVar}=json`);
-        urlParts.push('?onlybody=yes');
+        //urlParts.push('?onlybody=yes');
       } else {
         urlParts.push(`&${config.viewVar}=json`);
       }

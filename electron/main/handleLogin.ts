@@ -14,18 +14,17 @@ const loginFlashChecker$ = loginFlasher$.pipe(
 zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
   .pipe(
     map((v) => {
-      console.log('loginPipe', v);
       return v;
     })
   )
   .pipe(distinctUntilKeyChanged(0))
   .pipe(debounceTime(1000))
   .subscribe(([loginFlash, loginTrigger, apiUrl]) => {
-    console.log('apiUrl', apiUrl)
     const loginWin = new BrowserWindow({
       title: 'Login',
       webPreferences: {
         webSecurity: false,
+        contextIsolation: false,
       },
       width: 1200,
       height: 600,
@@ -33,7 +32,6 @@ zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
     });
     loginWin.on('close', () => {});
     loginWin.webContents.addListener('will-navigate', (event, url) => {
-      console.log('url', url);
       if (url?.replace(/\//g, '') === apiUrl?.replace(/\//g, '')) {
         loginWin.close();
         loginFlasher$.next();
@@ -50,7 +48,6 @@ zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
           )
         );
       }
-      //console.log('reqHeader', details.requestHeaders['Cookie']);
       callback({ requestHeaders: details.requestHeaders });
     });
     loginWin.webContents.session.webRequest.onHeadersReceived((details, callback) => {
@@ -70,7 +67,6 @@ zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
   });
 
 ipcMain.on('open-login-window', () => {
-  console.log('loginTrigger');
   loginTrigger$.next();
 });
 

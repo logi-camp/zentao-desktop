@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive } from 'vue';
+import { onMounted, reactive } from 'vue';
 import { ipcRenderer } from 'electron';
 import TaskCMP from './Task.vue';
 import ProjectCMP from './Project.vue';
@@ -13,7 +13,9 @@ const load = () => {
   repo.getProjects();
 };
 
-load();
+onMounted(() => {
+  setTimeout(load, 100);
+});
 
 const openNativePage = () => {
   ipcRenderer.send('open-native-page-window', 'ok');

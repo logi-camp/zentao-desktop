@@ -196,7 +196,6 @@ export default class ZentaoRequestBuilder {
    * @returns 请求结果
    */
   post(data?: string | Record<string, any>): Promise<ZentaoApiResult> {
-    console.log('post', { data });
     return this.zentao.request(this.moduleName, this._methodName, {
       method: 'POST',
       params: this._params,

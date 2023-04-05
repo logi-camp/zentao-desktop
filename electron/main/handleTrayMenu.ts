@@ -68,7 +68,4 @@ export default async (app: Electron.App) => {
     ]);
     useTray().setContextMenu(contextMenu);
   });
-  useTray().on('balloon-show', () => {
-    console.log('right-click');
-  });
 };

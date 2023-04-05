@@ -26,7 +26,6 @@ const repository = useRepo();
 
 const props = defineProps<{ project: Project; selected?: number }>();
 defineEmits<{ (e: 'update:selected'): void }>();
-console.log('oroj', props.project);
 </script>
 <style lang="sass" scoped>
 .done
