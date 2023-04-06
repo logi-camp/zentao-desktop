@@ -152,11 +152,10 @@ export default (
       try {
         this.openWorkingTaskDialog();
         ipcRenderer.send('open-effort-detail-dialog');
-        ipcRenderer.on('open-effort-detail-dialog-reply', async (_event, data) => {
+        ipcRenderer.once('open-effort-detail-dialog-reply', async (_event, data) => {
           const workingTask = store.query((state) => state.persistedStates.workingTask);
           workingTask.left = data.left;
           workingTask.work = data.work;
-          const workingSeconds = store.query((state) => state);
           const result = await this.zentao_.value?.addEfforts({
             taskId: `${workingTask.taskId}`,
             data: [
