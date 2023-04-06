@@ -6,7 +6,6 @@ import handleNativePage from './handleNativePage';
 import handleTrayMenu from './handleTrayMenu';
 import handleBar from './handleBar';
 import useRepo from './store/useRepo';
-import { Subject, withLatestFrom } from 'rxjs';
 import handleWorkingTaskDialog from './handleWorkingTaskDialog';
 // The built directory structure
 //
@@ -100,9 +99,9 @@ async function createMainWindow() {
 }
 
 ipcMain.on('show-main-win', () => {
-  if(!win || win.isDestroyed()){
+  if (!win || win.isDestroyed()) {
     createMainWindow();
-  }else{
+  } else {
     win.show();
   }
 });
@@ -122,7 +121,9 @@ app.on('window-all-closed', () => {
 });
 
 app.on('second-instance', () => {
-  if (win) {
+  if (!win || win.isDestroyed()) {
+    createMainWindow();
+  } else {
     // Focus on the main window if the user tried to open another
     if (win.isMinimized()) win.restore();
     win.focus();
