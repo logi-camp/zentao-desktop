@@ -5,11 +5,7 @@ import {
   filter,
   interval,
   map,
-  throttle,
   withLatestFrom,
-  defaultIfEmpty,
-  first,
-  concatWith,
   distinct,
 } from 'rxjs';
 import { Zentao12 } from '../api';
@@ -82,33 +78,6 @@ export default (
         workingTaskDialogIsVisible: false,
       }));
     }
-    async finishEffortDialog(work: string, left: number) {
-      /* store.update((state) => ({
-        ...state,
-        workingTask: { ...state.persistedStates.workingTask, left, work, dialogIsVisible: false },
-      })); */
-      const workingTask = store.query((state) => state.persistedStates?.workingTask);
-      const result = await this.zentao_.value?.addEfforts({
-        taskId: `${workingTask.taskId}`,
-        data: [
-          {
-            dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
-            id: '0',
-            work: work,
-            consumed: `${workingTask.seconds / 3600}`,
-            left: left.toString(),
-          },
-        ],
-      });
-      if (result.status && result.data) {
-        store.update((state) => {
-          return {
-            ...state,
-            workingTask: undefined,
-          };
-        });
-      }
-    }
 
     readonly workingSeconds$ = interval(1000)
       .pipe(
@@ -164,7 +133,10 @@ export default (
 
     startTask() {
       store.update((state) => {
-        if (!state.persistedStates.selectedTaskId) return state;
+        if (!state.persistedStates.selectedTaskId) {
+          ipcRenderer.send('show-main-win', {});
+          return state;
+        }
         return {
           ...state,
           persistedStates: {
