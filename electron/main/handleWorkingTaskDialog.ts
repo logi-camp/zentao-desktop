@@ -6,7 +6,7 @@ process.env.DIST_ELECTRON = join(__dirname, '..');
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
 const url = process.env.VITE_DEV_SERVER_URL;
 
-export default (app: Electron.App, mainWindow: BrowserWindow) => {
+export default (app: Electron.App) => {
   ipcMain.on('open-effort-detail-dialog', (event) => {
     const win = new BrowserWindow({
       //frame: false,

@@ -44,24 +44,7 @@ const preload = join(__dirname, '../preload/index.js');
 const url = process.env.VITE_DEV_SERVER_URL;
 const indexHtml = join(process.env.DIST, 'index.html');
 
-const winSubject = new Subject<BrowserWindow>();
-
-useRepo()
-  .customHeaders$.pipe(withLatestFrom(winSubject))
-  .subscribe(([value, window]) => {
-    window.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
-      //details.requestHeaders['Cookie'] = 'zentaosid=a239fe97d809371ca27611199d5b4c6f';
-      if (useRepo().customHeaders_.value) {
-        Object.entries(value).forEach(([k, v]) => {
-          details.requestHeaders[k] = v;
-        });
-      }
-      details.requestHeaders['referer'] = useRepo().apiUrl_.value;
-      callback({ requestHeaders: details.requestHeaders });
-    });
-  });
-
-async function createWindow() {
+async function createMainWindow() {
   win = new BrowserWindow({
     title: 'Main window',
     icon: join(process.env.PUBLIC, 'favicon.ico'),
@@ -77,13 +60,6 @@ async function createWindow() {
     width: 1300,
     height: 800,
   });
-  winSubject.next(win);
-
-  handleLogin(app, win);
-  handleNativePage(app, win);
-  handleTrayMenu(app);
-  handleBar(app);
-  handleWorkingTaskDialog(app, win);
 
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     details.responseHeaders['Cross-Origin-Opener-Policy'] = ['same-origin'];
@@ -110,10 +86,35 @@ async function createWindow() {
     if (url.startsWith('https:')) shell.openExternal(url);
     return { action: 'deny' };
   });
+  win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+    //details.requestHeaders['Cookie'] = 'zentaosid=a239fe97d809371ca27611199d5b4c6f';
+    if (useRepo().customHeaders_.value) {
+      Object.entries(useRepo().customHeaders_.value).forEach(([k, v]) => {
+        details.requestHeaders[k] = v;
+      });
+    }
+    details.requestHeaders['referer'] = useRepo().apiUrl_.value;
+    callback({ requestHeaders: details.requestHeaders });
+  });
   // win.webContents.on('will-navigate', (event, url) => { }) #344
 }
 
-app.whenReady().then(createWindow);
+ipcMain.on('show-main-win', () => {
+  if(!win || win.isDestroyed()){
+    createMainWindow();
+  }else{
+    win.show();
+  }
+});
+
+app.whenReady().then(() => {
+  createMainWindow();
+  handleLogin(app);
+  handleNativePage(app);
+  handleTrayMenu(app);
+  handleBar(app);
+  handleWorkingTaskDialog(app);
+});
 
 app.on('window-all-closed', () => {
   win = null;
@@ -133,7 +134,7 @@ app.on('activate', () => {
   if (allWindows.length) {
     allWindows[0].focus();
   } else {
-    createWindow();
+    createMainWindow();
   }
 });
 

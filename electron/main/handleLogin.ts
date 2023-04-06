@@ -70,6 +70,6 @@ ipcMain.on('open-login-window', () => {
   loginTrigger$.next();
 });
 
-export default (app: Electron.App, mainWindow: BrowserWindow) => {
-  loginFlasher$.next();
+export default (app: Electron.App) => {
+  loginFlasher$?.next();
 };

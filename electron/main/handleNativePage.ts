@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import useRepo from './store/useRepo';
 
-export default (app: Electron.App, mainWindow: BrowserWindow) => {
+export default (app: Electron.App) => {
   ipcMain.on('open-native-page-window', (event, arg) => {
     const loginWin = new BrowserWindow({
       title: 'Native Zentao',

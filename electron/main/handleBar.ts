@@ -1,6 +1,5 @@
 import { BrowserWindow, dialog, ipcMain, screen } from 'electron';
 import { join } from 'path';
-import useRepo from './store/useRepo';
 process.env.DIST_ELECTRON = join(__dirname, '..');
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
 const url = process.env.VITE_DEV_SERVER_URL;
@@ -13,7 +12,7 @@ export default (app: Electron.App) => {
     type: 'toolbar',
     width: 24,
     height: 450,
-    x: display.bounds.width - 24,
+    x: display.bounds.width - 24 - 22,
     y: display.bounds.height - 580,
     fullscreenable: false,
     webPreferences: {
