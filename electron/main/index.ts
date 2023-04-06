@@ -7,6 +7,7 @@ import handleTrayMenu from './handleTrayMenu';
 import handleBar from './handleBar';
 import useRepo from './store/useRepo';
 import handleWorkingTaskDialog from './handleWorkingTaskDialog';
+import { Subject, withLatestFrom } from 'rxjs';
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -43,6 +44,25 @@ const preload = join(__dirname, '../preload/index.js');
 const url = process.env.VITE_DEV_SERVER_URL;
 const indexHtml = join(process.env.DIST, 'index.html');
 
+
+const winSubject = new Subject<BrowserWindow>();
+
+useRepo()
+  .customHeaders$.pipe(withLatestFrom(winSubject))
+  .subscribe(([value, window]) => {
+    window.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+      if (useRepo().customHeaders_.value) {
+        Object.entries(value).forEach(([k, v]) => {
+          details.requestHeaders[k] = v;
+        });
+      }
+      details.requestHeaders['referer'] = useRepo().apiUrl_.value;
+      callback({ requestHeaders: details.requestHeaders });
+    });
+  });
+
+
+
 async function createMainWindow() {
   win = new BrowserWindow({
     title: 'Main window',
@@ -59,6 +79,7 @@ async function createMainWindow() {
     width: 1300,
     height: 800,
   });
+  winSubject.next(win);
 
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     details.responseHeaders['Cross-Origin-Opener-Policy'] = ['same-origin'];
@@ -85,16 +106,16 @@ async function createMainWindow() {
     if (url.startsWith('https:')) shell.openExternal(url);
     return { action: 'deny' };
   });
-  win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
-    //details.requestHeaders['Cookie'] = 'zentaosid=a239fe97d809371ca27611199d5b4c6f';
-    if (useRepo().customHeaders_.value) {
-      Object.entries(useRepo().customHeaders_.value).forEach(([k, v]) => {
-        details.requestHeaders[k] = v;
-      });
-    }
-    details.requestHeaders['referer'] = useRepo().apiUrl_.value;
-    callback({ requestHeaders: details.requestHeaders });
-  });
+  // win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+  //   //details.requestHeaders['Cookie'] = 'zentaosid=a239fe97d809371ca27611199d5b4c6f';
+  //   if (useRepo().customHeaders_.value) {
+  //     Object.entries(useRepo().customHeaders_.value).forEach(([k, v]) => {
+  //       details.requestHeaders[k] = v;
+  //     });
+  //   }
+  //   details.requestHeaders['referer'] = useRepo().apiUrl_.value;
+  //   callback({ requestHeaders: details.requestHeaders });
+  // });
   // win.webContents.on('will-navigate', (event, url) => { }) #344
 }
 

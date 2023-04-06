@@ -1,8 +1,8 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, IpcMainEvent, ipcMain } from 'electron';
 import { Subject, map, scan, zip, distinctUntilKeyChanged, debounceTime } from 'rxjs';
 import useRepo from './store/useRepo';
 
-const loginTrigger$ = new Subject<void>();
+const loginTrigger$ = new Subject<IpcMainEvent>();
 
 const loginFlasher$ = new Subject<void>();
 const loginFlashChecker$ = loginFlasher$.pipe(
@@ -11,7 +11,7 @@ const loginFlashChecker$ = loginFlasher$.pipe(
   }, 1)
 );
 
-zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
+zip([loginFlasher$, loginTrigger$])
   .pipe(
     map((v) => {
       return v;
@@ -19,7 +19,8 @@ zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
   )
   .pipe(distinctUntilKeyChanged(0))
   .pipe(debounceTime(1000))
-  .subscribe(([loginFlash, loginTrigger, apiUrl]) => {
+  .subscribe(([loginFlasher, loginTrigger]) => {
+    console.log('handle Login');
     const loginWin = new BrowserWindow({
       title: 'Login',
       webPreferences: {
@@ -32,8 +33,9 @@ zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
     });
     loginWin.on('close', () => {});
     loginWin.webContents.addListener('will-navigate', (event, url) => {
-      if (url?.replace(/\//g, '') === apiUrl?.replace(/\//g, '')) {
+      if (url?.replace(/\//g, '') === useRepo().apiUrl_.value?.replace(/\//g, '')) {
         loginWin.close();
+        loginTrigger.reply('login-finished')
         loginFlasher$.next();
       }
     });
@@ -62,12 +64,14 @@ zip([loginFlashChecker$, loginTrigger$, useRepo().apiUrl$])
       } */
       callback({ responseHeaders: details.responseHeaders });
     });
-    loginWin.loadURL(apiUrl + '/user-login.html');
+    loginWin.loadURL(useRepo().apiUrl_.value + '/user-login.html');
     loginWin.show();
   });
 
-ipcMain.on('open-login-window', () => {
-  loginTrigger$.next();
+ipcMain.on('open-login-window', (event) => {
+  console.log('open login win')
+  //loginFlasher$.next();
+  loginTrigger$.next(event);
 });
 
 export default (app: Electron.App) => {

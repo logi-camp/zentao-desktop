@@ -372,7 +372,19 @@ export default class Zentao {
 
       if (result?.data?.locate && result?.data?.locate.includes('user-login')) {
         useRepo().updateCustomHeaders(undefined);
-        ipcRenderer?.send('open-login-window', 'ping');
+        console.log('open login win')
+        await new Promise<void>((resolve)=>{
+          ipcRenderer?.send('open-login-window', 'ping');
+          ipcRenderer.on('login-finished', ()=> {
+            resolve();
+          })
+        })
+        return await this.request(
+          moduleName,
+          methodName,
+          options
+        )
+
       }
 
       this._log(name, { url, result, params, data, resp });
