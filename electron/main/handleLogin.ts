@@ -12,11 +12,6 @@ const loginFlashChecker$ = loginFlasher$.pipe(
 );
 
 zip([loginFlasher$, loginTrigger$])
-  .pipe(
-    map((v) => {
-      return v;
-    })
-  )
   .pipe(distinctUntilKeyChanged(0))
   .pipe(debounceTime(1000))
   .subscribe(([loginFlasher, loginTrigger]) => {

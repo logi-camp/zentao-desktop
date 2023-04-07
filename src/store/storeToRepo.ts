@@ -1,6 +1,6 @@
 import { select, Store } from '@ngneat/elf';
 import { useObservable } from '@vueuse/rxjs';
-import { debounceTime, filter, interval, map, withLatestFrom, distinct } from 'rxjs';
+import { debounceTime, filter, interval, map, withLatestFrom, distinct, merge, first } from 'rxjs';
 import { Zentao12 } from '../api';
 import { State } from './types';
 import { ipcRenderer } from 'electron';
@@ -56,9 +56,7 @@ export default (
       })
     );
 
-    readonly effortDetailDialogIsVisible$ = store
-      .pipe(select((state) => state.effortDetailDialogIsVisible))
-      .pipe(distinct());
+    readonly effortDetailDialogIsVisible$ = store.pipe(select((state) => state.effortDetailDialogIsVisible));
     openEffortDetailDialog() {
       store.update((state) => ({
         ...state,
@@ -152,31 +150,54 @@ export default (
 
     async stopTask() {
       try {
+        store.update((state) => ({
+          ...state,
+          persistedStates: {
+            ...state.persistedStates,
+            workingTask: { ...state.persistedStates.workingTask, readyToSubmit: false },
+          },
+        }));
         this.openEffortDetailDialog();
-        ipcRenderer.send('open-effort-detail-dialog');
-        ipcRenderer.once('open-effort-detail-dialog-reply', async (_event, data) => {
-          const workingTask = store.query((state) => state.persistedStates.workingTask);
-          workingTask.left = data.left;
-          workingTask.work = data.work;
-          const result = await this.zentao_.value?.addEfforts({
-            taskId: `${workingTask.taskId}`,
-            data: [
-              {
-                dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
-                id: '0',
-                work: workingTask.work,
-                consumed: `${this.workingSeconds_.value / 3600}`,
-                left: `${workingTask.left}`,
-              },
-            ],
+        merge(this.workingTask$, this.effortDetailDialogIsVisible$)
+          .pipe(filter((i) => (typeof i === 'boolean' ? i == false : i.readyToSubmit)))
+          .pipe(first())
+          .subscribe(async (workingTask) => {
+            if (typeof workingTask === 'boolean') {
+              return;
+            }
+            try {
+              console.log('workingTask', workingTask);
+              const result = await this.zentao_.value?.addEfforts({
+                taskId: `${workingTask.taskId}`,
+                data: [
+                  {
+                    dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
+                    id: '0',
+                    work: workingTask.work,
+                    consumed: `${this.workingSeconds_.value / 3600}`,
+                    left: `${workingTask.left}`,
+                  },
+                ],
+              });
+              console.log('workingTask', workingTask, result);
+            } catch (e) {
+              store.update((state) => ({
+                ...state,
+                persistedStates: {
+                  workingTask: {
+                    ...state.persistedStates.workingTask,
+                    readyToSubmit: false,
+                  },
+                },
+              }));
+            }
+            store.update((state) => {
+              return {
+                ...state,
+                persistedStates: { workingTask: undefined },
+              };
+            });
           });
-          store.update((state) => {
-            return {
-              ...state,
-              persistedStates: { workingTask: undefined },
-            };
-          });
-        });
       } catch (e) {
         console.log('stopTaskError', e);
       }
@@ -228,11 +249,18 @@ export default (
       }));
     }
 
-    updateWorkingTask(workingTask: State['persistedStates']['workingTask']) {
-      store.update((state) => ({
-        ...state,
-        persistedStates: { ...state.persistedStates, workingTask },
-      }));
+    updateWorkingTask(wt: Partial<State['persistedStates']['workingTask']>) {
+      store.update((state) => {
+        const workingTask = state.persistedStates.workingTask;
+        Object.entries(wt).forEach(([k, v]) => {
+          workingTask[k] = v;
+        });
+        console.log('updatewt', this.updateWorkingTask);
+        return {
+          ...state,
+          persistedStates: { ...state.persistedStates, workingTask },
+        };
+      });
     }
 
     saveApiUrl(apiUrl: string) {

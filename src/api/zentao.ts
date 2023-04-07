@@ -374,7 +374,7 @@ export default class Zentao {
         useRepo().updateCustomHeaders(undefined);
         console.log('open login win')
         await new Promise<void>((resolve)=>{
-          ipcRenderer?.send('open-login-window', 'ping');
+          ipcRenderer?.send('open-login-window');
           ipcRenderer.on('login-finished', ()=> {
             resolve();
           })

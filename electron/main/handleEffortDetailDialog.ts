@@ -7,7 +7,7 @@ process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
 const url = process.env.VITE_DEV_SERVER_URL;
 
 export default (app: Electron.App) => {
-  ipcMain.on('open-effort-detail-dialog', (event) => {
+  /* ipcMain.on('open-effort-detail-dialog', (event) => {
     const win = new BrowserWindow({
       //frame: false,
       //type: 'toolbar',
@@ -47,15 +47,53 @@ export default (app: Electron.App) => {
     win.setSkipTaskbar(true);
     win.moveTop();
     win.show();
-  });
+  }); */
   useRepo()
-    .effortDetailDialogIsVisible$.pipe(
-      map((v) => {
-        return v;
-      })
-    )
-    .pipe(distinct())
-    .pipe(debounceTime(1000))
-    .pipe(filter((v) => !!v))
-    .subscribe(() => {});
+    .effortDetailDialogIsVisible$
+    .pipe(filter((v) => true === v))
+    .subscribe(() => {
+      const win = new BrowserWindow({
+        //frame: false,
+        //type: 'toolbar',
+        width: 340,
+        height: 140,
+        //x: display.bounds.width - 24,
+        //y: display.bounds.height - 580,
+        fullscreenable: false,
+        webPreferences: {
+          nodeIntegration: true,
+          webSecurity: false,
+          contextIsolation: false,
+        },
+        skipTaskbar: true,
+        //resizable: false,
+        //transparent: true,
+      });
+      win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      win.setAlwaysOnTop(true, 'floating');
+      win.setMenu(null);
+      if (process.env.VITE_DEV_SERVER_URL) {
+        // electron-vite-vue#298
+
+        win.loadURL(`${url}#working-task-dialog`);
+        // Open devTool if the app is not packaged
+        win.webContents.openDevTools();
+      } else {
+        win.loadURL(`file://${join(__dirname, '../../dist/index.html#working-task-dialog')}`);
+      }
+
+      win.webContents.addListener('ipc-message', (_event, message, data) => {
+        if (message === 'dialog-submit') {
+          //event.reply('open-effort-detail-dialog-reply', data);
+          win.close();
+          useRepo().effortDetailDialogClosed();
+        }
+      });
+      win.setSkipTaskbar(true);
+      win.moveTop();
+      win.show();
+      win.addListener('close', () => {
+        useRepo().effortDetailDialogClosed();
+      });
+    });
 };
