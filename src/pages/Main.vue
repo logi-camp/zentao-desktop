@@ -35,11 +35,21 @@ const tasks = useObservable(repo.selectedProjectTasks$);
     </div>
     <div display="flex" align="items-stretch" w="full" flex="wrap">
       <ul w="[30%]">
-        <ProjectCMP v-for="project in projects" :project="project" v-model:selected="repo.selectedProjectId_.value" />
+        <ProjectCMP
+          v-for="project in projects"
+          :project="project"
+          :key="project.id"
+          v-model:selected="repo.selectedProjectId_.value"
+        />
       </ul>
       <div h="100%" border="right-[1px] dashed var(--primary)"></div>
       <ul flex="1">
-        <TaskCMP v-for="task in tasks" :task="task" :selected="`${repo.selectedTaskId_.value}` === task.id" />
+        <TaskCMP
+          v-for="task in tasks"
+          :task="task"
+          :key="task.id"
+          :selected="`${repo.selectedTaskId_.value}` === task.id"
+        />
       </ul>
       <div h="100%" border="right-[1px] dashed var(--primary)"></div>
     </div>
