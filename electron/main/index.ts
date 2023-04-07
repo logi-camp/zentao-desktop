@@ -22,6 +22,8 @@ process.env.DIST_ELECTRON = join(__dirname, '..');
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
 process.env.PUBLIC = process.env.VITE_DEV_SERVER_URL ? join(process.env.DIST_ELECTRON, '../public') : process.env.DIST;
 
+let isQuiting: boolean;
+
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration();
 
@@ -44,7 +46,6 @@ const preload = join(__dirname, '../preload/index.js');
 const url = process.env.VITE_DEV_SERVER_URL;
 const indexHtml = join(process.env.DIST, 'index.html');
 
-
 const winSubject = new Subject<BrowserWindow>();
 
 useRepo()
@@ -60,8 +61,6 @@ useRepo()
       callback({ requestHeaders: details.requestHeaders });
     });
   });
-
-
 
 async function createMainWindow() {
   win = new BrowserWindow({
@@ -117,29 +116,43 @@ async function createMainWindow() {
   //   callback({ requestHeaders: details.requestHeaders });
   // });
   // win.webContents.on('will-navigate', (event, url) => { }) #344
+
+  app.on('before-quit', function () {
+    isQuiting = true;
+  });
+
+  win.on('close', function (event) {
+    if (!isQuiting) {
+      event.preventDefault();
+      win.hide();
+      event.returnValue = false;
+    }
+  });
 }
 
-ipcMain.on('show-main-win', () => {
+const openMainWindow = () => {
   if (!win || win.isDestroyed()) {
     createMainWindow();
   } else {
     win.show();
   }
-});
+};
+
+ipcMain.on('show-main-win', () => {});
 
 app.whenReady().then(() => {
   createMainWindow();
   handleLogin(app);
   handleNativePage(app);
-  handleTrayMenu(app);
+  handleTrayMenu(app, openMainWindow);
   handleBar(app);
   handleEffortDetailDialog(app);
 });
 
-app.on('window-all-closed', () => {
+/* app.on('window-all-closed', () => {
   win = null;
   if (process.platform !== 'darwin') app.quit();
-});
+}); */
 
 app.on('second-instance', () => {
   if (!win || win.isDestroyed()) {

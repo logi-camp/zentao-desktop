@@ -3,15 +3,15 @@ import useRepo from './store/useRepo';
 
 export default (app: Electron.App) => {
   ipcMain.on('open-native-page-window', (event, arg) => {
-    const loginWin = new BrowserWindow({
+    const nativePageWin = new BrowserWindow({
       title: 'Native Zentao',
       webPreferences: {},
       width: 1400,
       height: 800,
     });
-    loginWin.on('close', () => {
+    nativePageWin.on('close', () => {
       event.reply('window-closed', '');
     });
-    loginWin.loadURL(useRepo().apiUrl_.value);
+    nativePageWin.loadURL(useRepo().apiUrl_.value);
   });
 };

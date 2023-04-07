@@ -5,7 +5,7 @@ import useTray from './useTray';
 let contextMenu: Electron.Menu;
 let interval: NodeJS.Timer;
 
-export default async (app: Electron.App) => {
+export default async (app: Electron.App, openMainWindow: () => void) => {
   useRepo().state$.subscribe((state) => {
     contextMenu = Menu.buildFromTemplate([
       {
@@ -77,11 +77,11 @@ export default async (app: Electron.App) => {
       {
         label: 'Quit',
         type: 'normal',
-        click(){
+        click() {
           app.quit();
-        }
-      }
+        },
+      },
     ]);
-    useTray().setContextMenu(contextMenu);
+    useTray(openMainWindow).setContextMenu(contextMenu);
   });
 };

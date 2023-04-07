@@ -1,9 +1,9 @@
-import { nativeImage, nativeTheme, Tray } from 'electron';
+import { ipcMain, nativeImage, nativeTheme, Tray } from 'electron';
 import path from 'path';
 
 let tray: Tray;
 
-export default () => {
+export default (openMainWindow: () => void) => {
   if (!tray) {
     let icon: Electron.NativeImage;
     if (nativeTheme.shouldUseDarkColors) {
@@ -13,5 +13,8 @@ export default () => {
     }
     tray = new Tray(icon);
   }
+  tray.on('click', () => {
+    openMainWindow();
+  });
   return tray;
 };
