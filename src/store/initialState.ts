@@ -4,7 +4,7 @@ const initialState: State = {
   projects: [],
   tasks: [],
   persistedStates: {},
-  preferences: { customHeaders: {}, showWorkingTaskBar: true },
+  preferences: { customHeaders: {}, effortBarIsVisible: true },
 };
 
 export default initialState;

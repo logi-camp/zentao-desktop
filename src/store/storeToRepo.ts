@@ -1,13 +1,6 @@
 import { select, Store } from '@ngneat/elf';
 import { useObservable } from '@vueuse/rxjs';
-import {
-  debounceTime,
-  filter,
-  interval,
-  map,
-  withLatestFrom,
-  distinct,
-} from 'rxjs';
+import { debounceTime, filter, interval, map, withLatestFrom, distinct } from 'rxjs';
 import { Zentao12 } from '../api';
 import { State } from './types';
 import { ipcRenderer } from 'electron';
@@ -148,7 +141,6 @@ export default (
     }
 
     async stopTask() {
-      this.log({ s: 'stopTask' });
       try {
         this.openWorkingTaskDialog();
         ipcRenderer.send('open-effort-detail-dialog');
@@ -190,6 +182,14 @@ export default (
           persistedStates: { ...state.persistedStates, selectedTaskId },
         };
       });
+    }
+
+    effortBarIsVisible$ = store.pipe(select((state) => state.preferences.effortBarIsVisible));
+    toggleEffortBarVisiblility() {
+      store.update((state) => ({
+        ...state,
+        preferences: { ...state.preferences, effortBarIsVisible: !state.preferences.effortBarIsVisible },
+      }));
     }
 
     deselectTask() {

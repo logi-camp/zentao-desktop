@@ -19,6 +19,6 @@ export type State = {
   preferences: {
     apiUrl?: string;
     customHeaders: Record<string, string>;
-    showWorkingTaskBar: boolean;
+    effortBarIsVisible: boolean;
   };
 };

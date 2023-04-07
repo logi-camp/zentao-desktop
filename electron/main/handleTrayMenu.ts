@@ -25,7 +25,6 @@ export default async (app: Electron.App) => {
             useRepo().updateWorkingTask({
               taskId: state.persistedStates.selectedTaskId,
               started: new Date(),
-              seconds: 0,
             });
           } else {
             clearInterval(interval);
@@ -64,6 +63,20 @@ export default async (app: Electron.App) => {
               useRepo().updateSelectedProjectId(project.id ? Number.parseInt(project.id) : undefined);
             },
           })) || [],
+      },
+      {
+        label: 'Preferences',
+        type: 'submenu',
+        submenu: [
+          {
+            label: 'Show effort bar',
+            type: 'checkbox',
+            checked: state.preferences.effortBarIsVisible,
+            click(menuItem, browserWindow, event) {
+              useRepo().toggleEffortBarVisiblility();
+            },
+          },
+        ],
       },
     ]);
     useTray().setContextMenu(contextMenu);
