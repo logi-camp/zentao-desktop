@@ -154,19 +154,8 @@ export default (
       });
     }
 
-    async stopTask() {
-      try {
-        store.update((state) => ({
-          ...state,
-          persistedStates: {
-            ...state.persistedStates,
-            workingTask: { ...state.persistedStates.workingTask, readyToSubmit: false },
-          },
-        }));
-        this.openEffortDetailDialog();
-      } catch (e) {
-        console.log('stopTaskError', e);
-      }
+    stopTask() {
+      this.openEffortDetailDialog();
     }
 
     updateSelectedTaskId(selectedTaskId: State['persistedStates']['selectedTaskId']) {
@@ -215,7 +204,7 @@ export default (
       }));
     }
 
-    async sumitEffort(wt: Partial<State['persistedStates']['workingTask']>) {
+    async submitEffort(wt: Partial<State['persistedStates']['workingTask']>) {
       const workingTask = store.query((state) => state.persistedStates.workingTask);
       Object.entries(wt).forEach(([k, v]) => {
         workingTask[k] = v;
@@ -238,7 +227,7 @@ export default (
         store.update((state) => {
           return {
             ...state,
-            persistedStates: { workingTask: undefined },
+            persistedStates: { ...state.persistedStates, workingTask: undefined },
           };
         });
         this.closeEffortDetailDialog();

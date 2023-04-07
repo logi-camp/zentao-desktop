@@ -6,7 +6,7 @@ import { useObservable } from '@vueuse/rxjs';
 
 document.title = 'Effort Detail';
 const finish = () => {
-  useRepo().sumitEffort({
+  useRepo().submitEffort({
     left: state.left,
     work: state.work
   });
