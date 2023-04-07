@@ -387,6 +387,8 @@ export default class Zentao {
 
       }
 
+      useRepo().log('returning result', result) // TODO effort log can't work without this line!
+
       this._log(name, { url, result, params, data, resp });
       return result;
     } catch (error) {

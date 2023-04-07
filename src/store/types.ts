@@ -14,9 +14,8 @@ export type State = {
       started: Date;
       work?: string;
       left?: number;
-      readyToSubmit?: boolean;
     };
-  },
+  };
   preferences: {
     apiUrl?: string;
     customHeaders: Record<string, string>;

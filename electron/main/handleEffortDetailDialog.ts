@@ -1,10 +1,10 @@
-import { BrowserWindow, ipcMain } from 'electron';
-import { map, debounceTime, distinct, filter } from 'rxjs';
+import { BrowserWindow } from 'electron';
 import useRepo from './store/useRepo';
 import { join } from 'path';
 process.env.DIST_ELECTRON = join(__dirname, '..');
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
 const url = process.env.VITE_DEV_SERVER_URL;
+let win: Electron.BrowserWindow | null;
 
 export default (app: Electron.App) => {
   /* ipcMain.on('open-effort-detail-dialog', (event) => {
@@ -48,15 +48,13 @@ export default (app: Electron.App) => {
     win.moveTop();
     win.show();
   }); */
-  useRepo()
-    .effortDetailDialogIsVisible$
-    .pipe(filter((v) => true === v))
-    .subscribe(() => {
-      const win = new BrowserWindow({
+  useRepo().effortDetailDialogIsVisible$.subscribe((show) => {
+    if (show) {
+      win = new BrowserWindow({
         //frame: false,
         //type: 'toolbar',
-        width: 340,
-        height: 140,
+        width: 400,
+        height: 200,
         //x: display.bounds.width - 24,
         //y: display.bounds.height - 580,
         fullscreenable: false,
@@ -86,14 +84,18 @@ export default (app: Electron.App) => {
         if (message === 'dialog-submit') {
           //event.reply('open-effort-detail-dialog-reply', data);
           win.close();
-          useRepo().effortDetailDialogClosed();
+          useRepo().closeEffortDetailDialog();
         }
       });
       win.setSkipTaskbar(true);
       win.moveTop();
       win.show();
       win.addListener('close', () => {
-        useRepo().effortDetailDialogClosed();
+        useRepo().closeEffortDetailDialog();
       });
-    });
+    } else {
+      console.log('close')
+      if (win && !win.isDestroyed()) win.close();
+    }
+  });
 };

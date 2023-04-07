@@ -1,12 +1,13 @@
 import { select, Store } from '@ngneat/elf';
 import { useObservable } from '@vueuse/rxjs';
-import { debounceTime, filter, interval, map, withLatestFrom, distinct, merge, first } from 'rxjs';
+import { debounceTime, filter, interval, map, withLatestFrom, merge, first } from 'rxjs';
 import { Zentao12 } from '../api';
 import { State } from './types';
 import { ipcRenderer } from 'electron';
 import { Project } from '../api/types';
 import serialize from 'serialize-javascript';
 import _ from 'lodash';
+import { fuzzy_time } from '../utils';
 
 function deserialize(serializedJavascript) {
   return eval('(' + serializedJavascript + ')');
@@ -63,14 +64,14 @@ export default (
         effortDetailDialogIsVisible: true,
       }));
     }
-    effortDetailDialogClosed() {
+    closeEffortDetailDialog() {
       store.update((state) => ({
         ...state,
         effortDetailDialogIsVisible: false,
       }));
     }
 
-    readonly workingSeconds$ = interval(1000)
+    readonly effortDurationSeconds$ = interval(1000)
       .pipe(
         withLatestFrom(
           store.pipe(select((state) => state.persistedStates?.workingTask)).pipe(filter((state) => !!state?.started))
@@ -82,8 +83,13 @@ export default (
           workingTask?.started ? Math.round((new Date().getTime() - workingTask?.started?.getTime()) / 1000) : undefined
         )
       );
+    readonly effortDuration$ = this.effortDurationSeconds$.pipe(
+      select((seconds) => {
+        if (seconds) return fuzzy_time(seconds);
+      })
+    );
 
-    readonly workingSeconds_ = useObservable(this.workingSeconds$);
+    readonly workingSeconds_ = useObservable(this.effortDurationSeconds$);
 
     readonly selectedProjectTasks_ = useObservable(this.selectedProjectTasks$);
     readonly selectedTaskId_ = useObservable(this.selectedTaskId$);
@@ -158,46 +164,6 @@ export default (
           },
         }));
         this.openEffortDetailDialog();
-        merge(this.workingTask$, this.effortDetailDialogIsVisible$)
-          .pipe(filter((i) => (typeof i === 'boolean' ? i == false : i.readyToSubmit)))
-          .pipe(first())
-          .subscribe(async (workingTask) => {
-            if (typeof workingTask === 'boolean') {
-              return;
-            }
-            try {
-              console.log('workingTask', workingTask);
-              const result = await this.zentao_.value?.addEfforts({
-                taskId: `${workingTask.taskId}`,
-                data: [
-                  {
-                    dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
-                    id: '0',
-                    work: workingTask.work,
-                    consumed: `${this.workingSeconds_.value / 3600}`,
-                    left: `${workingTask.left}`,
-                  },
-                ],
-              });
-              console.log('workingTask', workingTask, result);
-            } catch (e) {
-              store.update((state) => ({
-                ...state,
-                persistedStates: {
-                  workingTask: {
-                    ...state.persistedStates.workingTask,
-                    readyToSubmit: false,
-                  },
-                },
-              }));
-            }
-            store.update((state) => {
-              return {
-                ...state,
-                persistedStates: { workingTask: undefined },
-              };
-            });
-          });
       } catch (e) {
         console.log('stopTaskError', e);
       }
@@ -249,18 +215,47 @@ export default (
       }));
     }
 
-    updateWorkingTask(wt: Partial<State['persistedStates']['workingTask']>) {
-      store.update((state) => {
+    async sumitEffort(wt: Partial<State['persistedStates']['workingTask']>) {
+      const workingTask = store.query((state) => state.persistedStates.workingTask);
+      Object.entries(wt).forEach(([k, v]) => {
+        workingTask[k] = v;
+      });
+      try {
+        this.log('workingTask', workingTask);
+        const result = await this.zentao_.value?.addEfforts({
+          taskId: `${workingTask.taskId}`,
+          data: [
+            {
+              dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
+              id: '0',
+              work: workingTask.work,
+              consumed: `${this.workingSeconds_.value / 3600}`,
+              left: `${workingTask.left}`,
+            },
+          ],
+        });
+        this.log('workingTask', workingTask, result);
+        store.update((state) => {
+          return {
+            ...state,
+            persistedStates: { workingTask: undefined },
+          };
+        });
+        this.closeEffortDetailDialog();
+      } catch (e) {
+        this.log('catch', e);
+      }
+      /* store.update((state) => {
         const workingTask = state.persistedStates.workingTask;
         Object.entries(wt).forEach(([k, v]) => {
           workingTask[k] = v;
         });
-        console.log('updatewt', this.updateWorkingTask);
+
         return {
           ...state,
           persistedStates: { ...state.persistedStates, workingTask },
         };
-      });
+      }); */
     }
 
     saveApiUrl(apiUrl: string) {

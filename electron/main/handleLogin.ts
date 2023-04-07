@@ -12,7 +12,7 @@ const loginFlashChecker$ = loginFlasher$.pipe(
 );
 
 zip([loginFlasher$, loginTrigger$])
-  .pipe(distinctUntilKeyChanged(0))
+  //.pipe(distinctUntilKeyChanged(0))
   .pipe(debounceTime(1000))
   .subscribe(([loginFlasher, loginTrigger]) => {
     console.log('handle Login');
