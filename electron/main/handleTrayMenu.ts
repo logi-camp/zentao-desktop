@@ -74,6 +74,13 @@ export default async (app: Electron.App) => {
           },
         ],
       },
+      {
+        label: 'Quit',
+        type: 'normal',
+        click(){
+          app.quit();
+        }
+      }
     ]);
     useTray().setContextMenu(contextMenu);
   });
