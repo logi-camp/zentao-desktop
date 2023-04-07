@@ -5,12 +5,12 @@ import _ from 'lodash';
 import { State } from '../../../src/store/types';
 import { createStore, Store, withProps } from '@ngneat/elf';
 import { app, ipcMain } from 'electron';
-import { persistState, excludeKeys } from '@ngneat/elf-persist-state';
+import { persistState } from '@ngneat/elf-persist-state';
 import initialState from '../../../src/store/initialState';
 import useRepo from './useRepo';
 import { map } from 'rxjs';
 
-function deserialize(serializedJavascript) {
+function deserialize(serializedJavascript: string) {
   return eval('(' + serializedJavascript + ')');
 }
 
@@ -28,6 +28,12 @@ export default () => {
     var db = levelup(leveldown(app.getPath('userData') + '/store-db'));
 
     store = createStore({ name: 'store' }, withProps<State>(initialState));
+
+    ipcMain.on('subscribe-main-store-change', (event) => {
+      store.subscribe((state) => {
+        event.reply('main-store-changed', state);
+      });
+    });
 
     persistState(store, {
       key: 'store',

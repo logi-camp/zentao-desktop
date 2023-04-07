@@ -3,6 +3,7 @@ import { DragOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-desi
 import { ipcRenderer } from 'electron';
 import { computed } from 'vue';
 import useRepo from '../store/useRepo';
+import storeToRepo from '../store/storeToRepo';
 
 function fuzzy_time(dif: number) {
   let res = '';

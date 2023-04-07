@@ -5,7 +5,7 @@ export type State = {
   tasks: Task[];
   logs: { args: any[]; date: Date }[];
   logingIn: boolean;
-  workingTaskDialogIsVisible?: boolean;
+  effortDetailDialogIsVisible?: boolean;
   persistedStates: {
     selectedProjectId?: number;
     selectedTaskId?: number;
@@ -21,4 +21,6 @@ export type State = {
     customHeaders: Record<string, string>;
     effortBarIsVisible: boolean;
   };
+  test: string;
+  test2: string;
 };

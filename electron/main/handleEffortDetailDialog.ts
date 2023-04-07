@@ -49,7 +49,7 @@ export default (app: Electron.App) => {
     win.show();
   });
   useRepo()
-    .workingTaskDialogIsVisible$.pipe(
+    .effortDetailDialogIsVisible$.pipe(
       map((v) => {
         return v;
       })

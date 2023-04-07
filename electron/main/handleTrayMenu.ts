@@ -21,14 +21,10 @@ export default async (app: Electron.App) => {
         checked: !!state.persistedStates?.workingTask,
         click: () => {
           //updateMenu.reply('start-working', Number.parseInt(task.id));
-          if (!state.persistedStates?.workingTask) {
-            useRepo().updateWorkingTask({
-              taskId: state.persistedStates.selectedTaskId,
-              started: new Date(),
-            });
+          if (useRepo().amIworking_.value) {
+            useRepo().stopTask();
           } else {
-            clearInterval(interval);
-            useRepo().updateWorkingTask(undefined);
+            useRepo().startTask();
           }
         },
       },

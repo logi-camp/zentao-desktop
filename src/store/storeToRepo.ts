@@ -56,19 +56,19 @@ export default (
       })
     );
 
-    readonly workingTaskDialogIsVisible$ = store
-      .pipe(select((state) => state.workingTaskDialogIsVisible))
+    readonly effortDetailDialogIsVisible$ = store
+      .pipe(select((state) => state.effortDetailDialogIsVisible))
       .pipe(distinct());
-    openWorkingTaskDialog() {
+    openEffortDetailDialog() {
       store.update((state) => ({
         ...state,
-        workingTaskDialogIsVisible: true,
+        effortDetailDialogIsVisible: true,
       }));
     }
-    dialogClosed() {
+    effortDetailDialogClosed() {
       store.update((state) => ({
         ...state,
-        workingTaskDialogIsVisible: false,
+        effortDetailDialogIsVisible: false,
       }));
     }
 
@@ -124,10 +124,20 @@ export default (
       ]);
     }
 
+    test$ = store.pipe(select((state) => state.test));
+    test2$ = store.pipe(select((state) => state.test2));
+    addToTest() {
+      store.update((state) => {
+        return { ...state, test: (state.test || '') + '.' };
+      });
+    }
+
     startTask() {
       store.update((state) => {
         if (!state.persistedStates.selectedTaskId) {
-          ipcRenderer.send('show-main-win', {});
+          if (!ipcRenderer) {
+            ipcRenderer.send('show-main-win', {});
+          }
           return state;
         }
         return {
@@ -142,7 +152,7 @@ export default (
 
     async stopTask() {
       try {
-        this.openWorkingTaskDialog();
+        this.openEffortDetailDialog();
         ipcRenderer.send('open-effort-detail-dialog');
         ipcRenderer.once('open-effort-detail-dialog-reply', async (_event, data) => {
           const workingTask = store.query((state) => state.persistedStates.workingTask);

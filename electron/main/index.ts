@@ -6,7 +6,7 @@ import handleNativePage from './handleNativePage';
 import handleTrayMenu from './handleTrayMenu';
 import handleBar from './handleBar';
 import useRepo from './store/useRepo';
-import handleWorkingTaskDialog from './handleWorkingTaskDialog';
+import handleEffortDetailDialog from './handleEffortDetailDialog';
 import { Subject, withLatestFrom } from 'rxjs';
 // The built directory structure
 //
@@ -133,7 +133,7 @@ app.whenReady().then(() => {
   handleNativePage(app);
   handleTrayMenu(app);
   handleBar(app);
-  handleWorkingTaskDialog(app);
+  handleEffortDetailDialog(app);
 });
 
 app.on('window-all-closed', () => {

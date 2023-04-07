@@ -23,6 +23,12 @@ export default () => {
         store.update((state) => val);
       }
     });
+
+    ipcRenderer.send('subscribe-main-store-change');
+    ipcRenderer.on('main-store-changed', (_event, state: State) => {
+      if (!_.isEqual(state, store.getValue())) store.update(() => state);
+    });
+
     persistState(store, {
       key: 'store',
       runGuard: () => true,
