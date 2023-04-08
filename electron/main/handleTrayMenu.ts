@@ -1,7 +1,7 @@
 import { Menu } from 'electron';
 import useRepo from './store/useRepo';
 import useTray from './useTray';
-import { combineLatest, throttleTime } from 'rxjs';
+import { combineLatest, defaultIfEmpty, startWith, throttleTime, zip } from 'rxjs';
 import { Project, Task } from '../../src/api/types';
 
 let contextMenu: Electron.Menu;
@@ -36,9 +36,7 @@ const loadTrayMenu = (
         tasks?.map((task) => ({
           id: 'task-' + task.id,
           label: task.name,
-          checked:
-            (selectedTaskId ? `${selectedTaskId}` : undefined) ===
-            task.id,
+          checked: (selectedTaskId ? `${selectedTaskId}` : undefined) === task.id,
           type: 'radio',
           click() {
             useRepo().updateSelectedTaskId(task.id ? Number(task.id) : undefined);
@@ -85,17 +83,15 @@ const loadTrayMenu = (
 
 export default async (app: Electron.App, openMainWindow: () => void) => {
   combineLatest([
-    useRepo().amIWorking$,
-    useRepo().projects$,
-    useRepo().selectedProjectTasks$,
-    useRepo().selectedTaskId$,
-    useRepo().selectedProjectId$,
-    useRepo().effortBarIsVisible$,
-    useRepo().effortDuration$.pipe(throttleTime(10000)),
-  ]).subscribe(([amIWorking, projects, tasks, selectedTaskId, selectedProjectId,effortBarIsVisible, duration]) => {
-    loadTrayMenu(app,amIWorking, projects, tasks, selectedTaskId, selectedProjectId,effortBarIsVisible, duration);
-
-    const tray = useTray(openMainWindow, () => {});
-    tray.setContextMenu(contextMenu);
+    useRepo().amIWorking$.pipe(startWith(false)),
+    useRepo().projects$.pipe(startWith([])),
+    useRepo().selectedProjectTasks$.pipe(startWith([])),
+    useRepo().selectedTaskId$.pipe(startWith(undefined)),
+    useRepo().selectedProjectId$.pipe(startWith(undefined)),
+    useRepo().effortBarIsVisible$.pipe(startWith(true)),
+    useRepo().effortDuration$.pipe(startWith(undefined)).pipe(throttleTime(10000)),
+  ]).subscribe(([amIWorking, projects, tasks, selectedTaskId, selectedProjectId, effortBarIsVisible, duration]) => {
+    loadTrayMenu(app, amIWorking, projects, tasks, selectedTaskId, selectedProjectId, effortBarIsVisible, duration);
+    useTray(openMainWindow).setContextMenu(contextMenu);
   });
 };
