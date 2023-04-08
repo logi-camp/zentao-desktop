@@ -66,11 +66,6 @@ export default class Zentao {
   private _config?: ZentaoConfig;
 
   /**
-   * 本地存储管理对象
-   */
-  private _store?: Configstore;
-
-  /**
    * 用户指定的请求方式
    */
   private _userRequestType?: ZentaoRequestType;
@@ -287,7 +282,6 @@ export default class Zentao {
       headers?: Record<string, string>;
     } = {}
   ): Promise<ZentaoApiResult> {
-    console.log('req', options.data);
     if (
       (!this._config || this._config?.isTokenExpired) &&
       `${moduleName}/${methodName}`.toLowerCase() !== 'user/login'
@@ -323,7 +317,6 @@ export default class Zentao {
       data = (await import('querystring')).default.stringify(formData, undefined, undefined, {});
     }
 
-    console.log({ url, data });
     try {
       const resp = await axios.request({
         method,
@@ -334,7 +327,6 @@ export default class Zentao {
 
       let result: ZentaoApiResult;
       const remoteData = resp.data;
-      console.log({ resp });
       if (typeof remoteData === 'object' && remoteData !== null) {
         if (typeof remoteData.data === 'string' && (remoteData.data[0] === '[' || remoteData.data[0] === '{')) {
           remoteData.data = JSON.parse(remoteData.data);
@@ -354,7 +346,6 @@ export default class Zentao {
         result = options.resultConvertor(remoteData, result);
       }
 
-      console.log(2, { resp });
       if (options.fields && typeof result.data === 'object' && result.data) {
         if (Array.isArray(result.data)) {
           result.data = result.data.map((x) => slimmingObject(x, options.fields!));
@@ -365,14 +356,10 @@ export default class Zentao {
 
       if (`${moduleName}/${methodName}` === 'user/login' && result.status === 'success') {
         this._config?.renewToken();
-        if (this._preserveToken) {
-          this._store?.set('config', this._config);
-        }
       }
 
       if (result?.data?.locate && result?.data?.locate.includes('user-login')) {
         useRepo().updateCustomHeaders(undefined);
-        console.log('open login win')
         await new Promise<void>((resolve)=>{
           ipcRenderer?.send('open-login-window');
           ipcRenderer.on('login-finished', ()=> {
@@ -387,7 +374,7 @@ export default class Zentao {
 
       }
 
-      useRepo().log('returning result', result) // TODO effort log can't work without this line!
+      useRepo().log('returning result') // TODO effort log can't work without this line!
 
       this._log(name, { url, result, params, data, resp });
       return result;

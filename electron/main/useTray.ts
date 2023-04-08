@@ -3,7 +3,7 @@ import path from 'path';
 
 let tray: Tray;
 
-export default (openMainWindow: () => void) => {
+export default (openMainWindow: () => void, onRightClick: () => void) => {
   if (!tray) {
     let icon: Electron.NativeImage;
     if (nativeTheme.shouldUseDarkColors) {
@@ -12,9 +12,18 @@ export default (openMainWindow: () => void) => {
       icon = nativeImage.createFromPath(path.join(__dirname, 'public/tray-icon-light.png'));
     }
     tray = new Tray(icon);
+    tray.on('click', () => {
+      openMainWindow();
+    });
+    tray.on('right-click', () => {
+      onRightClick();
+    });
+    tray.on('balloon-show', () => {
+      onRightClick();
+    });
+    tray.on('mouse-down', () => {
+      onRightClick();
+    });
   }
-  tray.on('click', () => {
-    openMainWindow();
-  });
   return tray;
 };

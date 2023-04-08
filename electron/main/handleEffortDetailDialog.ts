@@ -94,7 +94,6 @@ export default (app: Electron.App) => {
         useRepo().closeEffortDetailDialog();
       });
     } else {
-      console.log('close')
       if (win && !win.isDestroyed()) win.close();
     }
   });

@@ -210,7 +210,6 @@ export default (
         workingTask[k] = v;
       });
       try {
-        this.log('workingTask', workingTask);
         const result = await this.zentao_.value?.addEfforts({
           taskId: `${workingTask.taskId}`,
           data: [
@@ -223,7 +222,6 @@ export default (
             },
           ],
         });
-        this.log('workingTask', workingTask, result);
         store.update((state) => {
           return {
             ...state,

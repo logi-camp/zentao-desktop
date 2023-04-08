@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, ipcMain, screen } from 'electron';
+import { BrowserWindow, screen } from 'electron';
 import { join } from 'path';
 import useRepo from './store/useRepo';
 process.env.DIST_ELECTRON = join(__dirname, '..');

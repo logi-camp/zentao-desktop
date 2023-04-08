@@ -174,7 +174,6 @@ app.on('activate', () => {
 });
 
 app.on('browser-window-created', (event, window) => {
-  console.log('wind', window);
   //window.setIcon(path.join(__dirname, 'res/applogo.png'))
 });
 

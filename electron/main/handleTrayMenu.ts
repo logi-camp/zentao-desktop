@@ -1,87 +1,101 @@
 import { Menu } from 'electron';
 import useRepo from './store/useRepo';
 import useTray from './useTray';
+import { combineLatest, throttleTime } from 'rxjs';
+import { Project, Task } from '../../src/api/types';
 
 let contextMenu: Electron.Menu;
-let interval: NodeJS.Timer;
+
+const loadTrayMenu = (
+  app: Electron.App,
+  amIWorking: boolean,
+  projects: Project[],
+  tasks: Task[],
+  selectedProjectId: number,
+  selectedTaskId: number,
+  effortBarIsVisible: boolean,
+  duration: string
+) => {
+  contextMenu = Menu.buildFromTemplate([
+    {
+      label: amIWorking ? `Click to stop working ${duration}` : 'Click to start working',
+      type: 'checkbox',
+      checked: amIWorking,
+      click: () => {
+        if (useRepo().amIworking_.value) {
+          useRepo().stopTask();
+        } else {
+          useRepo().startTask();
+        }
+      },
+    },
+    {
+      label: 'Task',
+      type: 'submenu',
+      submenu:
+        tasks?.map((task) => ({
+          id: 'task-' + task.id,
+          label: task.name,
+          checked:
+            (selectedTaskId ? `${selectedTaskId}` : undefined) ===
+            task.id,
+          type: 'radio',
+          click() {
+            useRepo().updateSelectedTaskId(task.id ? Number(task.id) : undefined);
+          },
+        })) || [],
+    },
+    {
+      label: 'Project',
+      type: 'submenu',
+      submenu:
+        projects?.map((project) => ({
+          id: project.id,
+          label: project.name,
+          checked: (selectedProjectId ? `${selectedProjectId}` : undefined) === project.id,
+          type: 'radio',
+          click() {
+            useRepo().updateSelectedProjectId(project.id ? Number.parseInt(project.id) : undefined);
+          },
+        })) || [],
+    },
+    {
+      label: 'Preferences',
+      type: 'submenu',
+      submenu: [
+        {
+          label: 'Show effort bar',
+          type: 'checkbox',
+          checked: effortBarIsVisible,
+          click() {
+            useRepo().toggleEffortBarVisiblility();
+          },
+        },
+      ],
+    },
+    {
+      label: 'Quit',
+      type: 'normal',
+      click() {
+        app.quit();
+      },
+    },
+  ]);
+};
 
 export default async (app: Electron.App, openMainWindow: () => void) => {
-  useRepo().state$.subscribe((state) => {
-    contextMenu = Menu.buildFromTemplate([
-      {
-        label: state.persistedStates?.workingTask
-          ? `Click to stop working ${Math.round(
-              (new Date().getTime() -
-                (state.persistedStates?.workingTask?.started?.getTime?.() ||
-                  new Date(state.persistedStates?.workingTask?.started).getTime())) /
-                1000
-            )}s`
-          : 'Click to start working',
-        type: 'checkbox',
-        checked: !!state.persistedStates?.workingTask,
-        click: () => {
-          //updateMenu.reply('start-working', Number.parseInt(task.id));
-          if (useRepo().amIworking_.value) {
-            useRepo().stopTask();
-          } else {
-            useRepo().startTask();
-          }
-        },
-      },
-      {
-        label: 'Task',
-        type: 'submenu',
-        submenu:
-          state.tasks?.map((task) => ({
-            id: 'task-' + task.id,
-            label: task.name,
-            checked:
-              (state.persistedStates?.selectedTaskId ? `${state.persistedStates?.selectedTaskId}` : undefined) ===
-              task.id,
-            type: 'radio',
-            click(menuItem, browserWindow, event) {
-              useRepo().updateSelectedTaskId(task.id ? Number(task.id) : undefined);
-            },
-          })) || [],
-      },
-      {
-        label: 'Project',
-        type: 'submenu',
-        submenu:
-          state.projects?.map((project) => ({
-            id: project.id,
-            label: project.name,
-            checked:
-              (state.persistedStates?.selectedProjectId ? `${state.persistedStates?.selectedProjectId}` : undefined) ===
-              project.id,
-            type: 'radio',
-            click(menuItem, browserWindow, event) {
-              useRepo().updateSelectedProjectId(project.id ? Number.parseInt(project.id) : undefined);
-            },
-          })) || [],
-      },
-      {
-        label: 'Preferences',
-        type: 'submenu',
-        submenu: [
-          {
-            label: 'Show effort bar',
-            type: 'checkbox',
-            checked: state.preferences.effortBarIsVisible,
-            click(menuItem, browserWindow, event) {
-              useRepo().toggleEffortBarVisiblility();
-            },
-          },
-        ],
-      },
-      {
-        label: 'Quit',
-        type: 'normal',
-        click() {
-          app.quit();
-        },
-      },
-    ]);
-    useTray(openMainWindow).setContextMenu(contextMenu);
+  combineLatest([
+    useRepo().amIWorking$,
+    useRepo().projects$,
+    useRepo().selectedProjectTasks$,
+    useRepo().selectedTaskId$,
+    useRepo().selectedProjectId$,
+    useRepo().effortBarIsVisible$,
+    useRepo().effortDuration$.pipe(throttleTime(10000)),
+  ]).subscribe(([amIWorking, projects, tasks, selectedTaskId, selectedProjectId,effortBarIsVisible, duration]) => {
+    loadTrayMenu(app,amIWorking, projects, tasks, selectedTaskId, selectedProjectId,effortBarIsVisible, duration);
+
+    const tray = useTray(openMainWindow, () => {});
+    tray.setContextMenu(contextMenu);
   });
 };
