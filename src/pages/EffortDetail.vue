@@ -29,13 +29,13 @@ const state = reactive<{ work?: string; left?: number }>({});
     <div display="flex">
       <span>work:</span>
       <div flex="1">
-        <input size="4" maxlength="4" w="full" type="text" placeholder="Some work" p="x-1" v-model="state.work" />
+        <input w="full" type="text" placeholder="Some work" p="x-1" v-model="state.work" />
       </div>
     </div>
     <div display="flex">
       <span>left: </span>
       <div flex="1" display="flex" gap="1">
-        <input size="4" maxlength="4" flex="1" type="number" v-model="state.left" p="x-1" placeholder="2" /><div> hour</div>
+        <input flex="1" type="number" v-model="state.left" p="x-1" placeholder="2" /><div> hour</div>
       </div>
     </div>
     <div display="flex" gap="1" justify="items-stretch">
