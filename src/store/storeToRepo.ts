@@ -245,6 +245,16 @@ export default (
       }); */
     }
 
+    cancelEffort() {
+      store.update((state) => {
+        return {
+          ...state,
+          persistedStates: { ...state.persistedStates, workingTask: undefined },
+        };
+      });
+      this.closeEffortDetailDialog();
+    }
+
     saveApiUrl(apiUrl: string) {
       store.update((state) => ({
         ...state,
