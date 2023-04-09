@@ -139,7 +139,7 @@ export default (
     startTask() {
       store.update((state) => {
         if (!state.persistedStates.selectedTaskId) {
-          if (!ipcRenderer) {
+          if (ipcRenderer) {
             ipcRenderer.send('show-main-win', {});
           }
           return state;

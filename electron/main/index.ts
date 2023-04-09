@@ -138,7 +138,9 @@ const openMainWindow = () => {
   }
 };
 
-ipcMain.on('show-main-win', () => {});
+ipcMain.on('show-main-win', () => {
+  openMainWindow();
+});
 
 app.whenReady().then(() => {
   createMainWindow();
