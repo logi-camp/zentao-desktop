@@ -217,7 +217,7 @@ export default (
               dates: (await import('dateformat')).default(new Date(), 'yyyy-mm-dd'),
               id: '0',
               work: workingTask.work,
-              consumed: `${this.workingSeconds_.value / 3600}`,
+              consumed: `${(((workingTask.consumed || this.workingSeconds_.value || 0) * 1) / 3600).toFixed(3)}`,
               left: `${workingTask.left}`,
             },
           ],

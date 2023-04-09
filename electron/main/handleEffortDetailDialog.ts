@@ -53,8 +53,8 @@ export default (app: Electron.App) => {
       win = new BrowserWindow({
         //frame: false,
         //type: 'toolbar',
-        width: 400,
-        height: 200,
+        width: 480,
+        height: 320,
         //x: display.bounds.width - 24,
         //y: display.bounds.height - 580,
         fullscreenable: false,

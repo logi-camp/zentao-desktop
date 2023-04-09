@@ -10,6 +10,9 @@ export function fuzzy_time(dif: number) {
 
   const fuzzy_string = (time_ref: number, time_str: string, max?: number) => {
     const fuzzy = max ? Math.floor(dif / time_ref) % max : Math.floor(dif / time_ref);
+    if (fuzzy === 0) {
+      return '';
+    }
     if (res) {
       res += ' ';
     }
@@ -24,8 +27,8 @@ export function fuzzy_time(dif: number) {
   if (dif >= t_day) fuzzy_string(t_day, 'day', 30);
   if (dif >= t_hour) fuzzy_string(t_hour, 'hour', 24);
   if (dif >= t_minute) fuzzy_string(t_minute, 'minute', 60);
-  if (dif >= t_second) fuzzy_string(t_second, 'second', 60);
-  else res = 'now';
+  //if (dif >= t_second) fuzzy_string(t_second, 'second', 60);
+  else res = 'zero';
 
   return res;
 }

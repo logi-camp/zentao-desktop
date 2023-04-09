@@ -8,6 +8,8 @@ import WindiCSS from 'vite-plugin-windicss';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import path from 'node:path';
 import multiple from 'vite-plugin-multiple';
+import Components from 'unplugin-vue-components/vite';
+import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
@@ -86,6 +88,9 @@ export default defineConfig(({ command }) => {
           // We only have to specify the file extensions we actually use.
           fileExtensions: ['vue', 'js', 'ts', 'jsx', 'tsx'],
         },
+      }),
+      Components({
+        resolvers: [AntDesignVueResolver()],
       }),
       /* multiple([
         {
