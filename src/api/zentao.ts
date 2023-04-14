@@ -360,21 +360,24 @@ export default class Zentao {
 
       if (result?.data?.locate && result?.data?.locate.includes('user-login')) {
         useRepo().updateCustomHeaders(undefined);
-        await new Promise<void>((resolve)=>{
+        await new Promise<void>((resolve) => {
           ipcRenderer?.send('open-login-window');
-          ipcRenderer.on('login-finished', ()=> {
+          ipcRenderer.on('login-finished', () => {
             resolve();
-          })
-        })
-        return await this.request(
-          moduleName,
-          methodName,
-          options
-        )
-
+          });
+        });
+        return await this.request(moduleName, methodName, options);
+      }
+      if (result?.data?.locate) {
+        try {
+          result.data = (await axios.get(result.data.locate)).data;
+          result.data = JSON.parse(result.data.data);
+        } catch (e) {
+          console.error(e);
+        }
       }
 
-      useRepo().log('returning result') // TODO effort log can't work without this line!
+      useRepo().log('returning result'); // TODO effort log can't work without this line!
 
       this._log(name, { url, result, params, data, resp });
       return result;

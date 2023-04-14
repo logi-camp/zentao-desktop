@@ -222,13 +222,17 @@ export default (
             },
           ],
         });
-        store.update((state) => {
-          return {
-            ...state,
-            persistedStates: { ...state.persistedStates, workingTask: undefined },
-          };
-        });
-        this.closeEffortDetailDialog();
+        if (result.status === 'success' && result.data.task.id === `${workingTask.taskId}`) {
+          store.update((state) => {
+            return {
+              ...state,
+              persistedStates: { ...state.persistedStates, workingTask: undefined },
+            };
+          });
+          this.closeEffortDetailDialog();
+        } else {
+          //TODO handle notification
+        }
       } catch (e) {
         this.log('catch', e);
       }
