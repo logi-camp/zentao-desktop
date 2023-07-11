@@ -55,6 +55,10 @@ export default class ZentaoApi extends Zentao {
       .get() as unknown as Promise<ZentaoApiResult<EffortListData>>;
   }
 
+  getExecutins(): Promise<ZentaoApiResult> {
+    return this.module('execution', 'all').get() as unknown as Promise<ZentaoApiResult>;
+  }
+
   addEfforts(params: {
     taskId: string;
     data: { dates: string; id: string; work: string; consumed: string; left: string }[];
@@ -65,7 +69,7 @@ export default class ZentaoApi extends Zentao {
         work: [...acm.work, v.work],
         consumed: [...acm.consumed, v.consumed],
         left: [...acm.left, v.left],
-        id: [...acm.left, v.id]
+        id: [...acm.left, v.id],
       }),
       { dates: [], work: [], consumed: [], left: [] }
     );

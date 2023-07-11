@@ -158,6 +158,13 @@ export type Project = {
   assignedToMeTasks: number;
 };
 
+export type Exectution = {
+  id: string;
+  name: string;
+  projectName: string;
+  project: string;
+};
+
 export type ExecutionStatus = 'doing' | 'done';
 
 export type Execution = {

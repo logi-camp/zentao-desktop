@@ -8,6 +8,7 @@ import handleBar from './handleBar';
 import useRepo from './store/useRepo';
 import handleEffortDetailDialog from './handleEffortDetailDialog';
 import { Subject, withLatestFrom } from 'rxjs';
+import handleKanban from './handleKanban';
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -149,6 +150,7 @@ app.whenReady().then(() => {
   handleTrayMenu(app, openMainWindow);
   handleBar(app);
   handleEffortDetailDialog(app);
+  handleKanban(app);
 });
 
 /* app.on('window-all-closed', () => {

@@ -14,7 +14,7 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "src/api", "src/store/", "src/utils", "electron/main/store.ts"],
+  "include": ["src/**/*.ts", "src/**/*.vue", "src/api", "src/store/", "src/utils", "electron/main/store.ts"],
   "references": [
     { "path": "./tsconfig.node.json" }
   ]

@@ -1,15 +1,11 @@
 import { BrowserWindow, IpcMainEvent, ipcMain } from 'electron';
-import { Subject, map, scan, zip, distinctUntilKeyChanged, debounceTime } from 'rxjs';
+import { Subject, scan, zip, debounceTime } from 'rxjs';
 import useRepo from './store/useRepo';
 
 const loginTrigger$ = new Subject<IpcMainEvent>();
 
 const loginFlasher$ = new Subject<void>();
-const loginFlashChecker$ = loginFlasher$.pipe(
-  scan(function (acc, value) {
-    return acc + 1;
-  }, 1)
-);
+
 
 zip([loginFlasher$, loginTrigger$])
   //.pipe(distinctUntilKeyChanged(0))
@@ -30,7 +26,7 @@ zip([loginFlasher$, loginTrigger$])
     loginWin.webContents.addListener('will-navigate', (event, url) => {
       if (url?.replace(/\//g, '') === useRepo().apiUrl_.value?.replace(/\//g, '')) {
         loginWin.close();
-        loginTrigger.reply('login-finished')
+        loginTrigger.reply('login-finished');
         loginFlasher$.next();
       }
     });
@@ -64,7 +60,7 @@ zip([loginFlasher$, loginTrigger$])
   });
 
 ipcMain.on('open-login-window', (event) => {
-  console.log('open login win')
+  console.log('open login win');
   //loginFlasher$.next();
   loginTrigger$.next(event);
 });

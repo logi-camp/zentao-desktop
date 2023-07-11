@@ -4,7 +4,7 @@ import { debounceTime, filter, interval, map, withLatestFrom, merge, first } fro
 import { Zentao12 } from '../api';
 import { State } from './types';
 import { ipcRenderer } from 'electron';
-import { Project } from '../api/types';
+import { Exectution, Project } from '../api/types';
 import serialize from 'serialize-javascript';
 import _ from 'lodash';
 import { fuzzy_time } from '../utils';
@@ -27,6 +27,7 @@ export default (
     readonly state$ = store.pipe(select((state) => state));
     readonly tasks$ = store.pipe(select((state) => state.tasks));
     readonly projects$ = store.pipe(select((state) => state.projects));
+    readonly kanbans$ = store.pipe(select((state) => state.executions));
     readonly selectedTaskId$ = store.pipe(select((state) => state.persistedStates.selectedTaskId));
     readonly selectedTask$ = store.pipe(
       select((state) => state.tasks.find((task) => task.id === `${state.persistedStates.selectedTaskId}`))
@@ -126,6 +127,23 @@ export default (
         ...(Object.values(result.data.projects) as Project[]),
         { name: 'All', id: undefined } as unknown as Project,
       ]);
+    }
+
+    async getKanbans() {
+      repo.updateProjects([]);
+      const result = await repo.zentao_.value?.getExecutins();
+      if (!result || result?.data?.locate) return;
+
+      repo.updateExecutions([
+        ...(Object.values(result.data.executionStats) as Exectution[]),
+        { name: 'All', id: undefined } as unknown as Exectution,
+      ]);
+    }
+    updateExecutions(executions: State['executions']) {
+      store.update((state) => ({
+        ...state,
+        executions,
+      }));
     }
 
     test$ = store.pipe(select((state) => state.test));
